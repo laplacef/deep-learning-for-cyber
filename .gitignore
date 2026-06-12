@@ -1,0 +1,13 @@
+# Internal notes
+notes/
+
+# Archived material
+archive/
+
+# OS and editor cruft
+.DS_Store
+Thumbs.db
+*~
+*.swp
+.idea/
+.vscode/
