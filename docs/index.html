@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Deep Learning for Cyber</title>
+<meta name="description" content="An intuition-first deep learning course for cybersecurity. Build models for real problems like phishing, malware, and intrusion detection.">
+<link rel="stylesheet" href="assets/fonts/fonts.css">
+<style>
+  :root {
+    --sans: 'IBM Plex Sans', system-ui, sans-serif;
+    --mono: 'IBM Plex Mono', ui-monospace, monospace;
+    --ink:#15161d; --muted:#6b6f80; --muted2:#9da0b0; --accent:#3b56d8;
+    --line:#dededf; --bg:#ffffff;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: var(--bg); color: var(--ink); font-family: var(--sans);
+    -webkit-font-smoothing: antialiased;
+    height: 100vh; display: flex; flex-direction: column;
+    padding: clamp(34px, 5.4vh, 76px) clamp(30px, 6vw, 120px);
+  }
+
+  /* header */
+  header { flex: 0 0 auto; }
+  h1 { font: 600 clamp(38px, 4.6vw, 68px)/1.02 var(--sans); letter-spacing: -2px; margin: 0; }
+  h1 .ver { margin-left: 14px; font: 500 clamp(15px, 1.5vw, 22px) var(--mono);
+            letter-spacing: 0; color: var(--muted2); vertical-align: baseline; }
+  .lede { font: 400 clamp(17px, 1.5vw, 23px)/1.45 var(--sans); color: var(--muted);
+          margin: 16px 0 0; max-width: 62ch; }
+
+  /* deck grid: two columns, numbered down each column (01-07 | 08-14) */
+  main { flex: 1 1 auto; display: flex; align-items: center; min-height: 0; }
+  .decks { list-style: none; margin: 0; padding: 0; width: 100%;
+           display: grid; grid-template-rows: repeat(7, auto); grid-auto-flow: column;
+           column-gap: clamp(36px, 6vw, 104px); }
+  .decks li { border-top: 1px solid var(--line); }
+  .decks li:nth-child(7), .decks li:last-child { border-bottom: 1px solid var(--line); }
+  .row { display: flex; align-items: flex-start; gap: clamp(12px, 1.4vw, 22px);
+         padding: clamp(8px, 1.1vh, 13px) 2px; text-decoration: none; color: var(--ink); }
+  .num { font: 500 clamp(12px, 1vw, 15px) var(--mono); color: var(--muted2); min-width: 2.4ch;
+         line-height: clamp(16px, 1.5vw, 22px); }
+  .meta { display: flex; flex-direction: column; gap: 3px; }
+  .name { font: 600 clamp(16px, 1.5vw, 22px)/1.04 var(--sans); }
+  .concepts { font: 500 clamp(11px, 0.95vw, 13.5px) var(--mono); color: var(--muted2); }
+  a.row:hover .name { color: var(--accent); }
+  .tag { margin-left: auto; line-height: clamp(16px, 1.5vw, 22px);
+         font: 500 clamp(11px, 1vw, 14px) var(--mono); color: var(--muted2); }
+  .row.planned .name { color: var(--muted2); }
+  .row.planned .concepts { color: #c2c5cf; }
+
+  /* footer — justified: attribution left, links right */
+  footer { flex: 0 0 auto; margin-top: clamp(20px, 3vh, 40px);
+           font: 500 clamp(13px, 1.1vw, 16px) var(--mono); color: var(--muted);
+           display: flex; justify-content: space-between; align-items: baseline; gap: 18px; }
+  footer .credit .who { color: var(--ink); }
+  footer a { color: var(--muted); text-decoration: none; }
+  footer a:hover { color: var(--accent); }
+  footer .dot { color: var(--muted2); margin: 0 8px; }
+</style>
+</head>
+<body>
+  <header>
+    <h1>Deep Learning for Cyber<span class="ver" id="ver"></span></h1>
+    <p class="lede">Learn the fundamentals of deep learning for cybersecurity, and build models that tackle real problems like phishing, malware, and intrusion detection. Intuition first, for professionals and academics.</p>
+  </header>
+
+  <main>
+    <ul class="decks">
+    </ul>
+  </main>
+
+  <footer>
+    <span class="credit">&copy; 2026 <span class="who">Francisco Laplace</span><span class="dot">·</span><a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a></span>
+    <span class="links"><a href="https://laplacef.me" target="_blank" rel="noopener">laplacef.me</a></span>
+  </footer>
+
+  <script src="assets/version.js"></script>
+  <script>
+    var v = document.getElementById('ver');
+    if (v && window.DLFC_VERSION) v.textContent = '(' + window.DLFC_VERSION + ')';
+  </script>
+</body>
+</html>

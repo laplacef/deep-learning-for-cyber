@@ -1,0 +1,324 @@
+/* Lecture-deck theme for reveal.js (shared design system).
+   Encodes the course design system as tokens + reusable slide patterns,
+   so slide markup stays semantic and free of inline styling.
+
+   Layout model: every content slide anchors its title at the same top-left
+   position (the header zone). Content lives in `.body` below and is free to
+   fill or center within the remaining space. */
+
+:root {
+  --sans: 'IBM Plex Sans', system-ui, sans-serif;
+  --mono: 'IBM Plex Mono', ui-monospace, monospace;
+
+  --ink:    #15161d;   /* headings, strong text          */
+  --body:   #33353f;   /* body copy                       */
+  --muted:  #6b6f80;   /* secondary text                  */
+  --muted2: #9da0b0;   /* tertiary text                   */
+  --accent: #3b56d8;   /* blue accent                     */
+  --red:    #c0392b;   /* warning / functional red        */
+
+  --bg:       #ffffff;
+  --bg-alt:   #f6f6f4; /* off-white alternating background */
+  --line:     #dededf; /* hairline divider                */
+  --line-2:   #e3e3e8;
+  --line-3:   #cfd0d6;
+  --tint-blue:#eef1fc;
+  --tint-red: #fbeceb;
+
+  --pad-y: 110px;      /* top/bottom slide padding -> title Y anchor */
+  --pad-x: 130px;      /* left/right slide padding  -> title X anchor */
+  --title-gap: 56px;   /* space from header zone down to content     */
+
+  /* Role-based type scale. Content slides share these three sizes for
+     title / subtitle / content. Dividers and the cover are distinct slide
+     types with their own (internally consistent) title/sub sizes below. */
+  --title:    64px;
+  --subtitle: 34px;
+  --content:  36px;
+}
+
+/* ---- stage: fixed 1920x1080 canvas, dark letterbox gutter ---- */
+html, body { margin: 0; padding: 0; }
+.reveal-viewport { background: var(--ink); }
+.reveal { font-family: var(--sans); color: var(--ink); -webkit-font-smoothing: antialiased; }
+
+.reveal .slides { text-align: left; }
+.reveal .slides > section {
+  box-sizing: border-box;
+  width: 1920px;
+  height: 1080px;
+  padding: var(--pad-y) var(--pad-x);
+  flex-direction: column;
+  justify-content: flex-start;   /* titles anchored to the top */
+}
+/* Critical: reveal sets `.present { display:block }` at higher specificity.
+   Match it so the slide is a flex column. */
+.reveal .slides > section.present { display: flex !important; }
+
+/* ---- the header zone: title (+ optional sub) sit at a fixed top-left ---- */
+.slide-title { font: 600 var(--title)/1.05 var(--sans); letter-spacing: -1.5px; color: var(--ink); margin: 0; max-width: 1600px; }
+.sub  { font: 400 var(--subtitle)/1.5 var(--sans); color: var(--muted); margin: 22px 0 0; max-width: 1320px; }
+
+/* ---- the content region: free to fill or center below the header ---- */
+.body { flex: 1; min-height: 0; display: flex; flex-direction: column; margin-top: var(--title-gap); }
+.body.center { justify-content: center; }   /* vertically center sparse content */
+.body.gap-lg { gap: 52px; }
+
+/* ---- typography helpers ---- */
+.reveal h1, .reveal h2, .reveal h3, .reveal p { margin: 0; font-weight: inherit; }
+.reveal strong, .reveal .ink { color: var(--ink); font-weight: 600; }
+.lead { font: 400 var(--content)/1.55 var(--sans); color: var(--body); max-width: 1400px; }
+.eyebrow { font: 500 28px/1 var(--mono); color: var(--accent); }
+/* topic heading inside an activity ("Think it through") slide body, below the slide title */
+.reveal .q-topic { font: 600 40px var(--sans); color: var(--accent); margin: 0 0 24px; }
+.code-inline { font-family: var(--mono); font-size: 27px; color: var(--ink); }
+
+/* ---- friendly annotated formula: plain words on top, shorthand below ---- */
+.formula-intro { font: 400 var(--subtitle)/1.4 var(--sans); color: var(--muted); margin-top: 52px; }
+.formula { display: flex; align-items: flex-start; flex-wrap: wrap; gap: 16px 24px; margin-top: 30px; }
+.ftok { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.ftok .fword { font: 500 32px var(--sans); color: var(--ink); white-space: nowrap; }
+.ftok .fsym  { font: 500 24px var(--mono); color: var(--muted); white-space: nowrap; }
+.ftok.key .fword { color: var(--accent); }
+
+/* ---- activation function rule: the equation that draws the curve ---- */
+.fn-eq { background: #fff; border: 1px solid var(--line-2); border-radius: 14px; padding: 20px 28px; }
+.fn-eq .eq { font: 500 32px/1 var(--mono); color: var(--ink); }
+.fn-eq .eq b { color: var(--accent); font-weight: 600; }
+.fn-eq .eq sup { font-size: 0.56em; vertical-align: 0.62em; }
+.fn-eq .eq sub { font-size: 0.62em; }
+.fn-eq .read { display: block; margin-top: 12px; font: 400 25px/1.4 var(--sans); color: var(--muted); }
+
+/* big formula sitting directly under its curve */
+.eq-big { font: 500 40px/1.1 var(--mono); color: var(--ink); }
+.eq-big b { color: var(--accent); font-weight: 600; }
+.eq-big sup { font-size: 0.56em; vertical-align: 0.6em; }
+.eq-cap { margin-top: 10px; font: 400 24px/1.4 var(--sans); color: var(--muted); }
+
+/* ---- cover (special: centered title block, footer pinned bottom-left) ---- */
+.reveal .slides > section.cover { justify-content: center; }
+.cover-title { font: 600 132px/0.98 var(--sans); letter-spacing: -4px; color: var(--ink); margin: 0; }
+.cover-sub   { font: 400 38px/1.45 var(--sans); color: var(--muted); margin: 40px 0 0; max-width: 1150px; }
+.deck-footer { font: 500 24px var(--mono); color: var(--muted); }
+.cover .deck-footer { position: absolute; left: var(--pad-x); bottom: var(--pad-y); margin: 0; }
+.deck-footer .name { color: var(--ink); }
+.deck-footer a.name { text-decoration: none; }
+.deck-footer a.name:hover { color: var(--accent); }
+
+/* ---- agenda (auto-numbered) ---- */
+.agenda { list-style: none; margin: 0; padding: 0; counter-reset: ag; width: 100%; }
+.agenda li {
+  counter-increment: ag;
+  position: relative;
+  padding: 34px 0 34px 108px; border-top: 1px solid var(--line);
+  font: 600 40px/1.25 var(--sans); color: var(--ink);
+}
+.agenda li:last-child { border-bottom: 1px solid var(--line); }
+.agenda li::before {
+  content: counter(ag, decimal-leading-zero);
+  position: absolute; left: 0; top: 38px;
+  font: 500 30px var(--mono); color: var(--accent); width: 64px;
+}
+
+/* ---- section divider (chapter marker: deliberately distinct, centered) ---- */
+.reveal .slides > section.divider { justify-content: center; }
+.divider .eyebrow { margin-bottom: 32px; }
+.divider-title { font: 600 92px/1.04 var(--sans); letter-spacing: -2px; color: var(--ink); margin: 0; }
+.divider-sub   { font: 400 34px/1.5 var(--sans); color: var(--muted); margin: 32px 0 0; max-width: 1300px; }
+
+/* ---- columns ---- */
+.cols { display: flex; gap: 72px; width: 100%; }
+.cols.gap-lg { gap: 96px; }
+.cols.top { align-items: flex-start; }
+.col { flex: 1; }
+.col-rule { width: 1px; background: var(--line); align-self: stretch; }
+.col-head { font: 600 30px var(--sans); color: var(--muted); margin-bottom: 26px; }
+.col-head.accent { color: var(--accent); }
+.col-text { font: 400 var(--content)/1.55 var(--sans); color: var(--body); }
+
+/* ---- cards ---- */
+.cards { display: flex; gap: 32px; width: 100%; }
+.card { flex: 1; background: var(--bg-alt); border-radius: 14px; padding: 48px; }
+.card.tint-blue { background: var(--tint-blue); }
+.card.tint-red  { background: var(--tint-red); }
+.card-eyebrow { font: 500 26px var(--mono); color: var(--accent); }
+.card-title { font: 600 32px var(--sans); color: var(--ink); margin: 12px 0 8px; }
+.card-note  { font: 400 25px/1.45 var(--sans); color: var(--muted); }
+.card p     { font: 400 var(--content)/1.5 var(--sans); color: var(--body); margin-top: 22px; }
+.card-big   { font: 600 52px var(--sans); color: var(--ink); }
+.card-big.accent { color: var(--accent); }
+.card-big.muted  { color: var(--muted); }
+.card-big.red    { color: var(--red); }
+
+/* ---- surface panel ---- */
+.surface { background: var(--bg-alt); border-radius: 14px; padding: 52px; }
+.surface-label { font: 500 25px var(--mono); color: var(--muted); margin-bottom: 32px; }
+
+/* ---- chips / pills / dark callout ---- */
+.chip {
+  display: inline-block; background: var(--bg-alt); border: 1px solid var(--line-2);
+  border-radius: 12px; padding: 22px 30px; font: 500 30px var(--sans); color: var(--ink);
+}
+/* A chip's off-white fill contrasts on a white slide, but blends inside an
+   off-white container. Flip it to white so the inner token stays distinct. */
+.surface .chip, .card .chip, .panel .chip { background: #fff; }
+
+/* ---- text-embedding helpers (tokens, vector chips/rows) ---- */
+.tok   { background: var(--tint-blue); border: 1px solid #d6ddf7; border-radius: 999px;
+         padding: 12px 26px; font: 500 28px var(--mono); color: var(--accent); }
+.vchip { background: var(--bg-alt); border-radius: 9px; padding: 14px 20px;
+         font: 500 28px var(--mono); color: var(--muted); }
+.vchip.red { background: var(--tint-red); color: var(--ink); }
+.vrow  { border-radius: 9px; padding: 12px 22px; font: 500 26px var(--mono); color: var(--ink); white-space: pre; }
+.vrow.red  { background: var(--tint-red); }
+.vrow.blue { background: var(--tint-blue); }
+.chip-stack { display: flex; flex-direction: column; gap: 20px; }
+.dark-card { background: var(--ink); color: #fff; border-radius: 14px; padding: 34px 44px; }
+.dark-card .label { font: 500 26px var(--mono); color: var(--muted2); margin-bottom: 10px; }
+.dark-card .big   { font: 600 44px var(--sans); }
+.arrow { font: 400 52px var(--sans); color: var(--line-3); }
+
+/* ---- code block (dark) + plain-English annotations ---- */
+.code-row { display: flex; gap: 56px; align-items: flex-start; width: 100%; }
+pre.code {
+  margin: 0; background: var(--ink); border-radius: 14px; padding: 44px 48px;
+  font: 500 25px/1.7 var(--mono); color: #e8e8ec; overflow: visible;
+}
+pre.code .k  { color: #7f86b3; } /* keyword  */
+pre.code .fn { color: #8ab4ff; } /* function */
+pre.code .c  { color: #7a8694; } /* comment  */
+pre.code .s  { color: #9ed6a8; } /* string   */
+pre.code .n  { color: #f0a26b; } /* number   */
+.code-annot { flex: 1; display: flex; flex-direction: column; gap: 26px; }
+.code-annot p { font: 400 28px/1.5 var(--sans); color: var(--muted); }
+
+/* ---- canvas-visual stage ---- */
+.stage { flex: 1; min-height: 0; display: flex; }
+.stage > * { display: block; width: 100%; height: 100%; }
+
+/* ---- chip rows (discussion pills / signal tags) ---- */
+.chips { display: flex; flex-wrap: wrap; gap: 18px; }
+
+/* ---- horizontal flow of cards joined by arrows ---- */
+.flow { display: flex; align-items: stretch; gap: 18px; width: 100%; }
+.flow.mid { align-items: center; }
+.flow-arrow { display: flex; align-items: center; font-size: 36px; color: var(--line-3); flex: 0 0 auto; }
+.step-card { flex: 1; background: var(--bg-alt); border: 1px solid var(--line-2); border-radius: 12px; padding: 36px; }
+.step-card.surface { background: var(--bg-alt); border: 0; }
+.step-card.dark { background: var(--ink); border: 0; }
+.step-eyebrow { font: 500 25px var(--mono); color: var(--accent); }
+.step-eyebrow.muted { color: var(--muted); }
+.step-eyebrow.dim { color: var(--muted2); }
+.step-name { font: 600 30px var(--sans); color: var(--ink); margin: 12px 0 8px; }
+.step-card.dark .step-name { color: #fff; }
+.step-note { font: 400 25px/1.4 var(--sans); color: var(--muted); }
+.step-card.dark .step-note { color: #c8cad4; }
+
+/* ---- stat (big number) cards ---- */
+.stat { flex: 1; background: var(--bg-alt); border-radius: 14px; padding: 44px; text-align: center; }
+.stat.dark { background: var(--ink); }
+.stat-num { font: 600 72px var(--mono); color: var(--ink); }
+.stat-num.accent { color: var(--accent); }
+.stat.dark .stat-num { color: #fff; }
+.stat-label { font: 500 28px var(--sans); color: var(--ink); margin-top: 10px; }
+.stat.dark .stat-label { color: #fff; }
+.stat-sub { font: 400 24px var(--sans); color: var(--muted); margin-top: 4px; }
+.stat.dark .stat-sub { color: var(--muted2); }
+
+/* ---- timeline date heading inside a card ---- */
+.card-date { font: 600 40px var(--mono); color: var(--ink); }
+.card-date.accent { color: var(--accent); }
+.card-date.red { color: var(--red); }
+
+/* ---- mapping table (e.g. brain vs neuron) ---- */
+.maptable { display: grid; grid-template-columns: 1fr 1fr; gap: 0 56px; border-top: 1px solid var(--line); width: 100%; }
+.maptable .mh { font: 500 26px var(--mono); padding: 22px 0 14px; }
+.maptable .mh.left { color: var(--muted2); }
+.maptable .mh.right { color: var(--accent); }
+.maptable .mc { border-top: 1px solid var(--line); padding: 22px 0; font: 400 28px/1.4 var(--sans); color: var(--body); }
+.maptable .mc.r { font-weight: 600; color: var(--ink); }
+.maptable .mc.last { border-bottom: 1px solid var(--line); }
+
+/* ---- big mono display formula ---- */
+.bigformula { font: 500 56px var(--mono); color: var(--ink); letter-spacing: -1px; }
+.bigformula.lg { font-size: 60px; }
+.bigformula .b { color: var(--accent); }
+.bigformula .r { color: var(--red); }
+.annots { display: flex; gap: 56px; width: 100%; }
+.annot-head { font: 600 30px var(--mono); color: var(--accent); }
+.annot-head.red { color: var(--red); }
+.annot-head.ink { color: var(--ink); }
+.annots .col p, .annots .col { font: 400 28px/1.45 var(--sans); color: var(--body); }
+.annots .annot-head + p { margin-top: 12px; }
+
+/* ---- cycle of circular nodes ---- */
+.cyclerow { display: flex; align-items: center; justify-content: center; gap: 26px; width: 100%; }
+.cnode { text-align: center; }
+.cnode .disc { width: 124px; height: 124px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font: 600 26px var(--mono); margin: 0 auto; }
+.cnode .disc.blue { background: var(--tint-blue); color: var(--accent); }
+.cnode .disc.red  { background: var(--tint-red);  color: var(--red); }
+.cnode .disc.ink  { background: var(--ink); color: #fff; }
+.cnode .lab { font: 600 28px var(--sans); color: var(--ink); margin-top: 18px; }
+.cnode .sub2 { font: 400 24px var(--sans); color: var(--muted); }
+.cycle-arrow { font-size: 40px; color: var(--line-3); flex: 0 0 auto; }
+
+/* ---- flexible side panel ---- */
+.panel { border-radius: 14px; padding: 44px; }
+.panel.surface { background: var(--bg-alt); }
+.panel.dark { background: var(--ink); color: #fff; }
+.panel.tint-blue { background: var(--tint-blue); }
+.panel-label { font: 500 24px var(--mono); color: var(--muted); margin-bottom: 22px; }
+.panel.dark .panel-label { color: var(--muted2); }
+.panel p { font: 400 28px/1.55 var(--sans); color: var(--body); }
+.panel.dark p { color: #c8cad4; }
+.panel .dim { color: var(--muted2); }
+
+/* ---- outcome row (e.g. confident + right -> low loss) ---- */
+.outcome { background: var(--bg-alt); border-radius: 12px; padding: 28px 34px; }
+.outcome b { font: 600 30px var(--sans); }
+.outcome .g { color: #1f7a4d; }
+.outcome .r { color: var(--red); }
+.outcome span { font: 400 27px var(--sans); color: var(--muted); }
+
+/* ---- canvas plot holder ---- */
+.plot-card { background: var(--bg-alt); border-radius: 14px; padding: 34px; display: flex; flex-direction: column; }
+.plot-label { font: 500 24px var(--mono); color: var(--muted); margin-bottom: 12px; }
+.plot-legend { display: flex; gap: 32px; margin-top: 14px; }
+.plot-legend span { display: inline-flex; align-items: center; gap: 10px; font: 500 24px var(--sans); color: var(--muted); }
+.plot-legend i { width: 24px; height: 4px; display: inline-block; }
+
+/* ---- inline pill link (e.g. a url) ---- */
+.pill-link { display: inline-flex; align-self: flex-start; align-items: center; gap: 16px; background: var(--tint-blue); border-radius: 999px; padding: 18px 34px; font: 500 30px var(--mono); color: var(--accent); }
+
+/* ---- muted footnote + source citation ---- */
+.note { font: 400 28px/1.5 var(--sans); color: var(--muted); }
+.source { font: 400 24px/1.55 var(--mono); color: var(--muted2); }
+
+/* ---- "in practice" applied callout (build / production / interview / security) ---- */
+.in-practice { display: flex; align-items: baseline; gap: 26px; margin-top: 44px;
+               background: var(--tint-blue); border-radius: 12px; padding: 24px 32px; }
+.in-practice.sec { background: var(--tint-red); }
+.ip-tag { flex: 0 0 auto; font: 600 24px var(--mono); color: var(--accent); letter-spacing: 0.3px; }
+.in-practice.sec .ip-tag { color: var(--red); }
+.ip-text { font: 400 27px/1.45 var(--sans); color: var(--body); margin: 0; }
+.ip-text strong { color: var(--ink); }
+
+/* ---- references / citations (denser look-up material) ---- */
+.refs { display: flex; gap: 80px; width: 100%; }
+.ref-col { flex: 1; }
+.ref-group + .ref-group { margin-top: 30px; }
+.ref-h { font: 600 26px var(--mono); color: var(--accent); margin-bottom: 16px; }
+.ref { font: 400 24px/1.5 var(--sans); color: var(--body); margin-bottom: 13px; }
+.ref .src { color: var(--muted); }
+.ref .src a { color: var(--accent); text-decoration: none; }
+.ref .src a:hover { text-decoration: underline; }
+.ref-n { color: var(--accent); font-weight: 600; margin-right: 4px; }
+
+/* inline numbered citation, superscript, links to the references slide */
+.cite { color: var(--accent); font-weight: 600; text-decoration: none; white-space: nowrap;
+        font-size: 0.62em; vertical-align: super; line-height: 0; margin-left: 1px; }
+.cite:hover { text-decoration: underline; }
+
+/* ---- reveal chrome toned to brand ---- */
+.reveal .controls { color: var(--muted2); }
+.reveal .progress { color: var(--accent); height: 4px; }
