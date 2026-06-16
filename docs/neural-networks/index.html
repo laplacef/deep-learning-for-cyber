@@ -1,0 +1,795 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Neural Networks — Deep Learning for Cyber</title>
+<link rel="stylesheet" href="../assets/reveal/reset.css">
+<link rel="stylesheet" href="../assets/reveal/reveal.css">
+<link rel="stylesheet" href="../assets/fonts/fonts.css">
+<link rel="stylesheet" href="../assets/theme/applied-ml.css">
+<link rel="stylesheet" href="../assets/katex/katex.min.css">
+<style>
+  /* Deck-01 reader-text normalization: one body size across slides.
+     Emphasis comes from weight/color/callouts, not size changes. */
+  .reveal .col-text { font-size: 32px; }
+</style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+  <!-- 01 · COVER -->
+  <section class="cover" data-background-color="#ffffff">
+    <div>
+      <h1 class="cover-title">Neural<br>Networks</h1>
+      <p class="cover-sub">From a single neuron to a complete network that scores a phishing email, traced through the forward pass without heavy mathematics.</p>
+    </div>
+    <div class="deck-footer">Deep Learning for Cyber&nbsp;&nbsp;·&nbsp;&nbsp;<a class="name" href="https://laplacef.me" target="_blank" rel="noopener">Francisco Laplace</a></div>
+  </section>
+
+  <!-- 02 · AGENDA -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">What this session covers</h2>
+    <div class="body center">
+      <ol class="agenda">
+        <li>The problem, and why fixed rules fail to generalize</li>
+        <li>The neuron, weighting features into one decision</li>
+        <li>The network, many neurons composed together</li>
+        <li>How a trained network scores an email from input to output</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- DIVIDER · PART 01 -->
+  <section class="divider" data-background-color="#ffffff">
+    <div class="eyebrow">Part 01 of 03</div>
+    <h2 class="divider-title">The problem</h2>
+    <p class="divider-sub">Why hand written rules fail to generalize, and what is worth measuring about an email.</p>
+  </section>
+
+  <!-- 03 · THE PHISHING PROBLEM -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">The phishing problem</h2>
+    <div class="body center">
+      <div class="cols gap-lg top">
+        <div class="col">
+          <p class="lead">An email arrives. <strong>Is it phishing, or legitimate?</strong><br><br>The signals are noisy: an unusual link, an urgent tone, an unfamiliar sender. No single signal is decisive, and the tactics shift from week to week.</p>
+        </div>
+        <div class="col surface">
+          <div class="surface-label">The objective</div>
+          <div style="display:flex; align-items:center; gap:24px;">
+            <span class="chip">an email</span>
+            <span class="arrow" style="color:var(--accent); font-size:40px;">→</span>
+            <span class="dark-card" style="padding:16px 26px;"><span style="font:500 30px var(--sans);">phishing? yes or no</span></span>
+          </div>
+          <p class="sub" style="margin-top:36px;">Rather than specifying the rule by hand, the model learns it from many labeled examples.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 04 · WHY LEARN THE RULES -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">Why the rules are learned, not written</h2>
+    <div class="body center">
+      <div class="cols">
+        <div class="col">
+          <div class="col-head">Rules written by hand</div>
+          <p class="col-text">A hand written rule such as <span class="code-inline">if links &gt; 5 then phishing</span> holds briefly. As attackers change tactics, exceptions accumulate until the rule set becomes unmaintainable.</p>
+        </div>
+        <div class="col-rule"></div>
+        <div class="col">
+          <div class="col-head accent">Learning from examples</div>
+          <p class="col-text">Given thousands of emails already labeled phishing or legitimate, the model <strong>infers the pattern itself</strong>. As phishing evolves, new examples are supplied and the model adapts.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 05 · YOU ALREADY DO THIS -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">An everyday analogue of the same computation</h2>
+    <p class="sub">On reading an email, a person weighs a few signals and arrives at a judgment.</p>
+    <div class="body center">
+      <div style="display:flex; align-items:center; gap:36px;">
+        <div class="chip-stack">
+          <span class="chip">an unusual link</span>
+          <span class="chip">an urgent, pressuring tone</span>
+          <span class="chip">an unfamiliar sender</span>
+        </div>
+        <span class="arrow">→</span>
+        <div class="dark-card">
+          <div class="label">intuition reports</div>
+          <div class="big">probably phishing</div>
+        </div>
+      </div>
+      <p class="lead" style="margin-top:52px;">A neuron performs the same operation, but over <strong>numbers</strong> rather than intuition.</p>
+    </div>
+  </section>
+
+  <!-- 06 · EMAIL TO NUMBERS -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">Turning an email into numbers</h2>
+    <p class="sub">A model cannot read text directly, so each email is first described by a short list of numbers, its <strong>features</strong>.</p>
+    <div class="body center">
+      <div class="cards">
+        <div class="card"><div class="card-eyebrow">x₁</div><div class="card-title">Unusual links</div><div class="card-note">count of unusual web addresses</div></div>
+        <div class="card"><div class="card-eyebrow">x₂</div><div class="card-title">Urgency words</div><div class="card-note">"act now", "verify today"</div></div>
+        <div class="card"><div class="card-eyebrow">x₃</div><div class="card-title">Unknown sender</div><div class="card-note">1 if the sender is not a known contact</div></div>
+        <div class="card"><div class="card-eyebrow">…x₂₀</div><div class="card-title">and more</div><div class="card-note">attachments, time sent…</div></div>
+      </div>
+      <p style="font:500 28px var(--mono); color:var(--ink); margin-top:50px;">one email&nbsp;&nbsp;→&nbsp;&nbsp;<span style="color:var(--accent);">[ 3, 7, 1, … ]</span>&nbsp;&nbsp;a vector of numbers</p>
+      <div class="in-practice sec"><span class="ip-tag">security</span><p class="ip-text">Feature engineering is where security expertise pays off: the strongest features are the ones an attacker <strong>cannot cheaply fake</strong>. Choosing them is a threat-modeling judgment, not a math one.</p></div>
+    </div>
+  </section>
+
+  <!-- 07 · FEATURES IN CODE -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">The same idea, in code</h2>
+    <p class="sub">One email in, a vector of numbers out. No learning yet, only counting.</p>
+    <div class="body center">
+      <div class="code-row">
+<pre class="code" style="flex:1.35;"><span class="k">def</span> <span class="fn">email_to_features</span>(email):
+    <span class="k">return</span> [
+        <span class="fn">count_links</span>(email),          <span class="c"># x1  odd web links</span>
+        <span class="fn">count_urgency_words</span>(email),  <span class="c"># x2  "act now"</span>
+        <span class="fn">is_unknown_sender</span>(email),    <span class="c"># x3  1 if unknown</span>
+        <span class="c"># ... about 20 simple signals</span>
+    ]
+
+x = <span class="fn">email_to_features</span>(msg)   <span class="c"># [3, 7, 1, ...]</span></pre>
+        <div class="code-annot">
+          <div><div class="step-eyebrow">email in, vector out</div><p>one email enters, a row of numbers returns.</p></div>
+          <div><div class="step-eyebrow">each helper</div><p>counts an occurrence, or returns 1 for yes and 0 for no.</p></div>
+          <div><div class="step-eyebrow">no learning here</div><p>this is plain Python, with no model involved.</p></div>
+          <div><div class="step-eyebrow">the result x</div><p>is the vector of numbers the network receives.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 08 · A REAL DATASET -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">Where the examples come from</h2>
+    <p class="sub">The model learns from emails that people have already labeled. These public collections are standard in the research literature.</p>
+    <div class="body center">
+      <div class="cards">
+        <div class="step-card"><div class="step-name" style="margin-top:0;">Nazario Phishing Corpus<a class="cite" href="#/references">[1]</a></div><p class="step-note">A public collection of real phishing emails, gathered over many years.</p></div>
+        <div class="step-card"><div class="step-name" style="margin-top:0;">Enron email dataset<a class="cite" href="#/references">[2]</a></div><p class="step-note">A large set of genuine corporate emails, the legitimate class to learn from.</p></div>
+        <div class="step-card"><div class="step-name" style="margin-top:0;">A live inbox</div><p class="step-note">Each "report phishing" action produces a fresh labeled example.</p></div>
+      </div>
+      <p class="note" style="margin-top:48px;">Labels are essential; without them there is nothing to learn from.</p>
+    </div>
+  </section>
+
+  <!-- 09 · DISCUSSION -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">Think it through</h2>
+    <div class="body center">
+      <p class="q-topic">Which signals are worth measuring</p>
+      <p class="lead" style="margin-bottom:44px;">Which signals about an email are worth converting into features?</p>
+      <div class="chips" style="margin-bottom:44px;">
+        <span class="chip" style="border-radius:999px;">number of attachments</span>
+        <span class="chip" style="border-radius:999px;">time of day sent</span>
+        <span class="chip" style="border-radius:999px;">reply address matches sender?</span>
+        <span class="chip" style="border-radius:999px;">all caps in the subject?</span>
+      </div>
+      <p class="lead"><strong>Consider the adversary.</strong> Every chosen feature is something an attacker will attempt to fake. A feature is useful only if it is hard to forge.</p>
+    </div>
+  </section>
+
+  <!-- DIVIDER · PART 02 -->
+  <section class="divider" data-background-color="#ffffff">
+    <div class="eyebrow">Part 02 of 03</div>
+    <h2 class="divider-title">The neuron</h2>
+    <p class="divider-sub">Weighting a few features into a single decision.</p>
+  </section>
+
+  <!-- 10 · BORROWED FROM THE BRAIN -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">The idea was borrowed from the brain</h2>
+    <p class="sub">The first artificial neuron was a deliberately simplified model of a biological brain cell.</p>
+    <div class="body center">
+      <div class="maptable">
+        <div class="mh left">In the brain</div>
+        <div class="mh right">In our neuron</div>
+        <div class="mc">Branches called dendrites pick up signals from other cells</div>
+        <div class="mc r">The input numbers, the features describing the email</div>
+        <div class="mc">Some connections are strong, some are weak</div>
+        <div class="mc r">The weights, the contribution of each feature</div>
+        <div class="mc">The cell body adds the incoming signals together</div>
+        <div class="mc r">The weighted sum, plus the bias</div>
+        <div class="mc last">Past a threshold it fires a pulse, otherwise stays quiet</div>
+        <div class="mc r last">The activation, turning the total into an output</div>
+      </div>
+      <p class="note" style="margin-top:38px;">A biological brain contains roughly <strong class="ink">86 billion</strong><a class="cite" href="#/references">[3]</a> neurons. The artificial version is far simpler: it borrows the structure of the idea, not the biology.<a class="cite" href="#/references">[4]</a></p>
+    </div>
+  </section>
+
+  <!-- 11 · A SHORT HISTORY -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">From a 1943 idea to today</h2>
+    <p class="sub">Neural networks are an old idea, dismissed twice and revived twice.</p>
+    <div class="body center">
+      <div class="cards" style="gap:20px; align-items:stretch;">
+        <div class="step-card"><div class="card-date">1943</div><div class="step-name">Neurons as math</div><p class="step-note">McCulloch and Pitts publish the first formal model of a neuron: on or off, past a threshold.<a class="cite" href="#/references">[4]</a></p></div>
+        <div class="step-card"><div class="card-date">1958</div><div class="step-name">The Perceptron</div><p class="step-note">Rosenblatt builds a machine that learns to separate simple patterns. The press is captivated.<a class="cite" href="#/references">[5]</a></p></div>
+        <div class="step-card"><div class="card-date red">1969</div><div class="step-name">The first winter</div><p class="step-note">A prominent critique shows that a single neuron cannot learn certain simple problems. Interest and funding collapse.<a class="cite" href="#/references">[6]</a></p></div>
+        <div class="step-card"><div class="card-date">1986</div><div class="step-name">Backpropagation</div><p class="step-note">A method for training many layers at once revives the field, the engine behind everything that follows.<a class="cite" href="#/references">[7]</a></p></div>
+        <div class="step-card"><div class="card-date accent">2012</div><div class="step-name">Big data</div><p class="step-note">Abundant data and fast hardware let a deep network win an image recognition contest decisively. The modern era begins.<a class="cite" href="#/references">[8]</a></p></div>
+      </div>
+      <p class="note" style="color:var(--ink); margin-top:42px;">The core idea changed little. What finally caught up was <strong>data and computing power</strong>.</p>
+    </div>
+  </section>
+
+  <!-- 12 · MEET THE NEURON -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">Meet the neuron</h2>
+    <div class="body center">
+      <p class="lead">A neuron is an elementary decision unit. It takes a few features, weights each one, sums them, and returns a single number. A network is <strong>many such neurons connected together.</strong></p>
+      <div class="formula">
+        <span class="ftok key"><span class="fword">phishing score</span><span class="fsym">score</span></span>
+        <span class="ftok"><span class="fword">=</span><span class="fsym">=</span></span>
+        <span class="ftok key"><span class="fword">squeeze(</span><span class="fsym">f(</span></span>
+        <span class="ftok"><span class="fword">features × weights</span><span class="fsym">w · x</span></span>
+        <span class="ftok"><span class="fword">+</span><span class="fsym">+</span></span>
+        <span class="ftok"><span class="fword">bias</span><span class="fsym">b</span></span>
+        <span class="ftok"><span class="fword">)</span><span class="fsym">)</span></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 13 · INSIDE A NEURON (animated) -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">What's inside a single neuron</h2>
+    <p class="sub">One phishing email flows through, from raw features to a single score.</p>
+    <div class="body">
+      <div class="stage" style="margin-top:80px;"><neuron-flow></neuron-flow></div>
+    </div>
+  </section>
+
+  <!-- 14 · WEIGHTS -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">What the weights do</h2>
+    <p class="sub">Each weight functions as a <strong>volume knob</strong> on one feature. Training is the search for good settings across all of them.</p>
+    <div class="body center">
+      <div class="cards">
+        <div class="card"><div class="card-big accent">large</div><p>This feature carries strong influence, pushing the output toward phishing.</p></div>
+        <div class="card"><div class="card-big muted">near zero</div><p>This feature is effectively ignored, with negligible effect on the output.</p></div>
+        <div class="card"><div class="card-big red">negative</div><p>This feature pushes against phishing, as a trusted, known sender would.</p></div>
+      </div>
+      <p class="note" style="margin-top:44px;">One weight per feature. They begin as random values and are adjusted each time the network sees a labeled example.</p>
+      <div class="in-practice"><span class="ip-tag">in practice</span><p class="ip-text">Reading the trained weights is a free <strong>feature importance check</strong>: the largest weights reveal what the model relies on.</p></div>
+    </div>
+  </section>
+
+  <!-- 15 · BIAS -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">What the bias does</h2>
+    <div class="body center">
+      <div class="cols gap-lg" style="align-items:center;">
+        <p class="col col-text" style="font-size:32px;">The bias is the neuron's <strong>baseline tendency</strong> to fire, before any feature is considered.<br><br>It is a single value added to the weighted sum: a <strong>negative</strong> bias suppresses activation, a <strong>positive</strong> one promotes it.</p>
+        <div class="col" style="display:flex; flex-direction:column; gap:24px;">
+          <div class="surface" style="padding:34px 40px;"><div style="font:600 30px var(--sans); color:var(--ink);">Low bias, slow to fire</div><div class="step-note" style="margin-top:8px;">remains inactive until the evidence accumulates</div></div>
+          <div class="surface" style="padding:34px 40px;"><div style="font:600 30px var(--sans); color:var(--ink);">High bias, quick to fire</div><div class="step-note" style="margin-top:8px;">activates on the faintest signal</div></div>
+        </div>
+      </div>
+      <div class="in-practice"><span class="ip-tag">in practice</span><p class="ip-text">The bias is <strong>learned during training</strong>; the 0.5 cutoff is set afterward. Both govern how readily the filter labels an email.</p></div>
+    </div>
+  </section>
+
+  <!-- 16 · WEIGHTED SUM -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">Adding up the evidence</h2>
+    <p class="sub">Each feature is multiplied by its weight, the products are summed, and the bias is added.</p>
+    <div class="body center">
+      <div style="font-size:56px; color:var(--ink); text-align:center; margin:0;">\[ z = w_1 x_1 + w_2 x_2 + \cdots + w_n x_n + b \]</div>
+      <div class="annots" style="margin-top:56px;">
+        <div class="col"><div class="annot-head">the w x part</div><p>each feature times its weight, summed across all features</p></div>
+        <div class="col"><div class="annot-head red">plus b</div><p>the bias, the baseline added to the sum</p></div>
+        <div class="col"><div class="annot-head ink">equals z</div><p>one number, the total evidence so far</p></div>
+      </div>
+      <p class="note" style="margin-top:50px;">No calculus is involved, only multiplication and addition.</p>
+      <div class="in-practice"><span class="ip-tag">in practice</span><p class="ip-text">In practice <strong>z</strong> is never computed by hand; the framework does it. But recognizing it as \( w \cdot x + b \) is what lets one debug a model that returns nearly the same score for every email.</p></div>
+    </div>
+  </section>
+
+  <!-- 17 · WHAT ACTIVATION IS -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">What an activation function is</h2>
+    <p class="sub">After summation the neuron holds a single number, the total <span class="code-inline">z</span>. The activation function reshapes it into a bounded form.</p>
+    <div class="body center">
+      <div class="cols gap-lg" style="align-items:center;">
+        <div class="col">
+          <p class="col-text">One family <strong>compresses</strong> the total into the 0 to 1 range, as the curve on the right shows. Another passes strong positive signals and blocks the rest.</p>
+          <p class="col-text" style="margin-top:28px;">The choice depends on <strong>where the neuron sits</strong> in the network and the form of output required.</p>
+        </div>
+        <div class="col plot-card" style="flex:0 0 600px;">
+          <div style="display:flex; justify-content:space-between;" class="plot-label"><span>any number in</span><span>a bounded range out</span></div>
+          <canvas data-plot="squeeze" data-w="532" data-h="300" style="width:532px; height:300px;"></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 18 · WHY ACTIVATION -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">Why we need an activation</h2>
+    <div class="body center">
+      <div class="cols gap-lg top">
+        <div class="col">
+          <div class="col-head">At the output, shape the result</div>
+          <p class="col-text" style="margin:0 0 40px;">The total <span class="code-inline">z</span> is unbounded. At the output it is compressed into a probability: one form for two classes, another for more.</p>
+          <div class="col-head accent">In the hidden layers, introduce a bend</div>
+          <p class="col-text">Without a nonlinearity, stacked neurons collapse to a single straight line. The bend lets the network fit curved, real world patterns.</p>
+        </div>
+        <div class="col plot-card" style="flex:0 0 520px; align-items:center; ">
+          <div class="plot-label" style="align-self:flex-start;">a straight line versus a bend</div>
+          <canvas data-plot="bend" data-w="448" data-h="300" style="width:448px; height:300px;"></canvas>
+        </div>
+      </div>
+      <div class="in-practice" style="margin-top:30px;"><span class="ip-tag">from the paper</span><p class="ip-text">Cybenko (1989)<a class="cite" href="#/references">[9]</a> proved a single hidden layer with a sigmoid-like activation can approximate <strong>any continuous function</strong> to any accuracy. The bend is what makes a network universal.</p></div>
+    </div>
+  </section>
+
+  <!-- 18b · ONE NEURON CAN'T (XOR) -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">The problem one neuron can't solve</h2>
+    <p class="sub">A single neuron can draw only one straight line. Some patterns require more.</p>
+    <div class="body center">
+      <div class="cols gap-lg" style="align-items:center;">
+        <div class="col">
+          <p class="col-text" style="font-size:32px;">Consider two signals: a <strong>risky link</strong> and an <strong>urgent tone</strong>.</p>
+          <p class="col-text" style="font-size:32px; margin-top:22px;">When they <strong>disagree</strong> (a calm tone concealing a bad link, or loud urgency with nothing behind it) the email is suspicious. When they agree, it is usually benign.</p>
+          <p class="col-text" style="font-size:32px; margin-top:22px;">No single straight line separates the four cases, and one neuron is exactly one straight cut. <span style="color:var(--accent);">A hidden layer bends the space until a line suffices.</span></p>
+        </div>
+        <div class="col plot-card" style="flex:0 0 600px; align-items:center;">
+          <div class="plot-label" style="align-self:flex-start;">two signals, four cases</div>
+          <svg width="500" height="400" viewBox="0 0 500 400" role="img" aria-label="XOR scatter">
+            <line x1="80" y1="340" x2="470" y2="340" stroke="#e3e3e8" stroke-width="2"/>
+            <line x1="80" y1="340" x2="80" y2="40" stroke="#e3e3e8" stroke-width="2"/>
+            <line x1="120" y1="60" x2="440" y2="320" stroke="#cfd0d6" stroke-width="3" stroke-dasharray="7 7"/>
+            <circle cx="170" cy="270" r="22" fill="#3b56d8"/>
+            <circle cx="380" cy="110" r="22" fill="#3b56d8"/>
+            <circle cx="170" cy="110" r="22" fill="#c0392b"/>
+            <circle cx="380" cy="270" r="22" fill="#c0392b"/>
+            <text x="100" y="372" font-family="'IBM Plex Mono', monospace" font-size="22" fill="#9da0b0">no link</text>
+            <text x="330" y="372" font-family="'IBM Plex Mono', monospace" font-size="22" fill="#9da0b0">risky link</text>
+            <text x="20" y="280" font-family="'IBM Plex Mono', monospace" font-size="22" fill="#9da0b0" transform="rotate(-90 30 280)">calm</text>
+            <text x="20" y="120" font-family="'IBM Plex Mono', monospace" font-size="22" fill="#9da0b0" transform="rotate(-90 30 120)">urgent</text>
+            <text x="250" y="60" font-family="'IBM Plex Mono', monospace" font-size="20" fill="#9da0b0">any cut gets one wrong</text>
+          </svg>
+          <div style="display:flex; gap:36px; margin-top:6px; font:500 24px var(--mono); color:var(--muted);"><span><i style="display:inline-block; width:18px; height:18px; border-radius:50%; vertical-align:-2px; margin-right:10px; background:#3b56d8;"></i>benign</span><span><i style="display:inline-block; width:18px; height:18px; border-radius:50%; vertical-align:-2px; margin-right:10px; background:#c0392b;"></i>suspicious</span></div>
+        </div>
+      </div>
+      <div class="in-practice" style="margin-top:28px;"><span class="ip-tag">from the paper</span><p class="ip-text">Minsky &amp; Papert (1969)<a class="cite" href="#/references">[6]</a> proved a single perceptron cannot learn this exact pattern, the famous <strong>XOR</strong> problem. That limit helped trigger the first AI winter, until hidden layers and backprop answered it.</p></div>
+    </div>
+  </section>
+
+  <!-- 19 · THREE ACTIVATIONS, TWO JOBS -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">Three activations, two jobs</h2>
+    <p class="sub">The location of a function in the network determines which one is used.</p>
+    <div class="body center">
+      <div class="cards">
+        <div class="card"><div class="card-eyebrow">hidden layers</div><div class="card-title">ReLU</div><div class="card-note">keeps positive values, sets the rest to zero. the inexpensive bend for hidden layers.</div></div>
+        <div class="card"><div class="card-eyebrow">output · binary</div><div class="card-title">Sigmoid</div><div class="card-note">maps two classes to a single 0 to 1 probability, as in the phishing score.</div></div>
+        <div class="card"><div class="card-eyebrow">output · multiclass</div><div class="card-title">Softmax</div><div class="card-note">maps more than two classes to percentages that sum to 100%.</div></div>
+      </div>
+      <p class="note" style="margin-top:40px;">ReLU provides the bend in the hidden layers. Sigmoid and softmax shape the output, selected by the number of classes: two is <strong>binary</strong>, more is <strong>multiclass</strong>.</p>
+      <p class="note" style="margin-top:18px; color:var(--muted2);">These three are the common choices, not the full set. Others such as tanh, Leaky ReLU, and GELU each vary the same idea of bending or compressing a number.</p>
+    </div>
+  </section>
+
+  <!-- 20 · WHY RELU FOR HIDDEN LAYERS -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">Why ReLU runs the hidden layers</h2>
+    <p class="sub">What makes sigmoid ideal at the output is what limits it in the hidden layers.</p>
+    <div class="body">
+      <div class="cols gap-lg" style="align-items:center;">
+        <div class="col">
+          <div class="col-head">Cheaper to train</div>
+          <p class="col-text" style="font-size:32px;">ReLU is a single comparison against zero. Sigmoid evaluates a full S curve on every pass, and its flat tails slow learning, so ReLU trains faster and more stably.</p>
+          <div class="col-head accent" style="margin-top:44px;">Matched to its role</div>
+          <p class="col-text" style="font-size:32px;">ReLU is used in the hidden layers, where only an inexpensive bend is needed. Sigmoid remains on the output neuron, where its 0 to 1 compression yields the phishing score.</p>
+        </div>
+        <div class="col plot-card" style="flex:0 0 600px; text-align:center; align-items:center;">
+          <svg viewBox="0 0 460 340" role="img" aria-label="four sample numbers on the ReLU curve" style="width:400px; max-width:100%; height:auto;">
+            <line x1="132" y1="40" x2="132" y2="300" stroke="#e3e3e8" stroke-width="2"/>
+            <line x1="50" y1="300" x2="430" y2="300" stroke="#9da0b0" stroke-width="2"/>
+            <polyline points="60,300 132,300 420,40" fill="none" stroke="#15161d" stroke-width="4" stroke-linejoin="round"/>
+            <g stroke="#b9bdcc" stroke-width="1.5" stroke-dasharray="5 5">
+              <line x1="228" y1="300" x2="228" y2="213"/>
+              <line x1="372" y1="300" x2="372" y2="83"/>
+              <line x1="276" y1="300" x2="276" y2="170"/>
+            </g>
+            <g fill="#3b56d8"><circle cx="228" cy="213" r="7"/><circle cx="372" cy="83" r="7"/><circle cx="276" cy="170" r="7"/></g>
+            <circle cx="108" cy="300" r="7" fill="#c0392b"/>
+            <g font-family="'IBM Plex Mono', monospace" font-size="24" font-weight="600" fill="#15161d" text-anchor="end">
+              <text x="214" y="210">4</text><text x="358" y="80">10</text><text x="262" y="167">6</text>
+            </g>
+            <text x="108" y="286" font-family="'IBM Plex Mono', monospace" font-size="24" font-weight="600" fill="#c0392b" text-anchor="middle">0</text>
+            <g font-family="'IBM Plex Mono', monospace" font-size="24" fill="#6b6f80" text-anchor="middle">
+              <text x="228" y="328">4</text><text x="108" y="328">-1</text><text x="372" y="328">10</text><text x="276" y="328">6</text>
+            </g>
+          </svg>
+          <div style="font-size:36px; color:var(--ink); text-align:center; margin-top:12px;">\[ \mathrm{ReLU}(x) = \max(0,\, x) \]</div>
+        </div>
+      </div>
+      <div class="in-practice" style="margin-top:18px;"><span class="ip-tag">from the paper</span><p class="ip-text">Glorot, Bordes &amp; Bengio (2011)<a class="cite" href="#/references">[10]</a> found ReLU units train as well or better than sigmoid and tanh, while producing sparser, cheaper representations.</p></div>
+    </div>
+  </section>
+
+  <!-- 21 · SIGMOID DEEP DIVE -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">Sigmoid, the binary score</h2>
+    <p class="sub">For exactly two classes, a single sigmoid neuron at the output suffices.</p>
+    <div class="body">
+      <div class="cols gap-lg" style="align-items:center;">
+        <div class="col">
+          <p class="col-text">It compresses the total into one number between 0 and 1, interpreted as a <strong>probability</strong>. A score of 0.92 indicates roughly 92% confidence that the email is phishing.</p>
+          <div class="surface" style="margin-top:28px; padding:30px 36px;"><div style="font:600 30px var(--sans); color:var(--ink);">Bounded and saturating</div><p class="step-note" style="margin-top:8px;">However large the input grows, the output approaches 1 without exceeding it, and approaches 0 in the other direction.</p></div>
+        </div>
+        <div class="col plot-card" style="flex:0 0 600px; text-align:center; align-items:center;">
+          <svg viewBox="0 0 460 340" role="img" aria-label="four sample numbers on the sigmoid curve" style="width:400px; max-width:100%; height:auto;">
+            <g stroke="#e3e3e8" stroke-width="2"><line x1="50" y1="40" x2="430" y2="40"/><line x1="50" y1="170" x2="430" y2="170"/></g>
+            <line x1="132" y1="40" x2="132" y2="300" stroke="#e3e3e8" stroke-width="2"/>
+            <line x1="50" y1="300" x2="430" y2="300" stroke="#9da0b0" stroke-width="2"/>
+            <polyline points="60,288 84,269 108,230 132,170 156,110 180,71 204,52 228,45 252,42 276,41 324,40 420,40" fill="none" stroke="#15161d" stroke-width="4" stroke-linejoin="round"/>
+            <g stroke="#b9bdcc" stroke-width="1.5" stroke-dasharray="5 5">
+              <line x1="108" y1="300" x2="108" y2="230"/><line x1="228" y1="300" x2="228" y2="45"/><line x1="276" y1="300" x2="276" y2="41"/><line x1="372" y1="300" x2="372" y2="40"/>
+            </g>
+            <g fill="#3b56d8"><circle cx="108" cy="230" r="7"/><circle cx="228" cy="45" r="7"/><circle cx="276" cy="41" r="7"/><circle cx="372" cy="40" r="7"/></g>
+            <g font-family="'IBM Plex Mono', monospace" font-size="24" fill="#6b6f80" text-anchor="end">
+              <text x="44" y="48">1</text><text x="44" y="178">0.5</text><text x="44" y="306">0</text>
+            </g>
+            <g font-family="'IBM Plex Mono', monospace" font-size="24" fill="#6b6f80" text-anchor="middle">
+              <text x="108" y="328">-1</text><text x="228" y="328">4</text><text x="276" y="328">6</text><text x="372" y="328">10</text>
+            </g>
+          </svg>
+          <div style="font-size:36px; color:var(--ink); text-align:center; margin-top:12px;">\[ \sigma(x) = \dfrac{1}{1 + e^{-x}} \]</div>
+        </div>
+      </div>
+      <div class="in-practice" style="margin-top:18px;"><span class="ip-tag">in practice</span><p class="ip-text">The score is the basis for action. A <strong>cutoff</strong>, 0.5 by default, converts it into a yes or no decision. Raising it is stricter; lowering it catches more.</p></div>
+    </div>
+  </section>
+
+  <!-- 21c · ADDING THE BENDS MAKES THE CURVE -->
+  <style>
+    .hb { display:flex; flex-direction:row; align-items:center; justify-content:center; gap:12px; width:100%; }
+    .hb-item { display:flex; flex-direction:column; align-items:center; gap:10px; }
+    .hb-item svg { background:var(--bg-alt); border-radius:14px; }
+    .hb-lab { font:400 24px var(--sans); color:var(--muted); text-align:center; }
+    .hb-lab b { color:var(--ink); font-weight:600; display:block; font:600 26px var(--sans); margin-bottom:2px; }
+    .hb-op { font:600 42px var(--mono); color:var(--muted2); align-self:center; padding-bottom:40px; }
+    .hb-op.eq { color:var(--accent); }
+    .reveal .hb-note { font:400 26px/1.4 var(--sans); color:var(--muted); max-width:1160px; text-align:center; align-self:center; margin:64px auto 0; }
+    .hb-note b { color:var(--ink); font-weight:600; }
+  </style>
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">Adding the bends makes the curve</h2>
+    <p class="sub">As one input varies from low to high, a single neuron traces one bend. A layer produces many bends, and the next layer sums them into one curve.</p>
+    <div class="body center">
+      <div class="hb">
+
+        <div class="hb-item">
+          <svg viewBox="0 0 240 200" width="300" height="250" role="img" aria-label="one neuron, one bend">
+            <line x1="20" y1="180" x2="220" y2="180" stroke="#cfd0d6" stroke-width="2"/>
+            <polyline points="20,180 70,180 220,70" fill="none" stroke="#15161d" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+            <circle cx="70" cy="180" r="6" fill="#3b56d8"/>
+          </svg>
+          <div class="hb-lab"><b>neuron 1</b>one bend</div>
+        </div>
+
+        <div class="hb-op">+</div>
+
+        <div class="hb-item">
+          <svg viewBox="0 0 240 200" width="300" height="250" role="img" aria-label="another neuron, another bend">
+            <line x1="20" y1="180" x2="220" y2="180" stroke="#cfd0d6" stroke-width="2"/>
+            <polyline points="20,180 110,180 220,95" fill="none" stroke="#15161d" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+            <circle cx="110" cy="180" r="6" fill="#3b56d8"/>
+          </svg>
+          <div class="hb-lab"><b>neuron 2</b>another bend</div>
+        </div>
+
+        <div class="hb-op">+</div>
+
+        <div class="hb-item">
+          <svg viewBox="0 0 240 200" width="300" height="250" role="img" aria-label="another neuron, another bend">
+            <line x1="20" y1="180" x2="220" y2="180" stroke="#cfd0d6" stroke-width="2"/>
+            <polyline points="20,180 150,180 220,120" fill="none" stroke="#15161d" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+            <circle cx="150" cy="180" r="6" fill="#3b56d8"/>
+          </svg>
+          <div class="hb-lab"><b>neuron 3</b>another bend</div>
+        </div>
+
+        <div class="hb-op eq">=</div>
+
+        <div class="hb-item">
+          <svg viewBox="0 0 240 200" width="300" height="250" role="img" aria-label="the bends added into a curve">
+            <line x1="20" y1="180" x2="220" y2="180" stroke="#cfd0d6" stroke-width="2"/>
+            <polyline points="20,180 70,180 110,150 150,100 220,40" fill="none" stroke="#3b56d8" stroke-width="4" stroke-linejoin="round" stroke-linecap="round"/>
+            <circle cx="70" cy="180" r="6" fill="#3b56d8"/><circle cx="110" cy="150" r="6" fill="#3b56d8"/><circle cx="150" cy="100" r="6" fill="#3b56d8"/>
+          </svg>
+          <div class="hb-lab"><b>the layer's curve</b>each bend, added up</div>
+        </div>
+
+      </div>
+      <p class="hb-note">The <b>bias</b> sets where each bend turns on, the <b>weight</b> sets its slope. A negative weight points a bend downward, so the curve can dip and rise to fit any shape.</p>
+      <div class="in-practice"><span class="ip-tag">in practice</span><p class="ip-text">Training <strong>repositions the bends</strong>, adjusting weights and biases until the curve fits the data.</p></div>
+    </div>
+  </section>
+
+  <!-- 22 · SOFTMAX FOR MORE THAN TWO -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">When there are more than two answers</h2>
+    <p class="sub">The filter has two classes, but many problems have more. That is the role of <strong>softmax</strong>.</p>
+    <div class="body center">
+      <p class="lead" style="font-size:32px;">Consider sorting each email into three categories. The network has one output neuron per category, and softmax converts their scores into percentages that sum to 100%.</p>
+      <div class="flow" style="margin-top:30px;">
+        <div class="stat"><div class="stat-num">6%</div><div class="stat-label">Safe</div></div>
+        <div class="stat"><div class="stat-num">12%</div><div class="stat-label">Spam</div></div>
+        <div class="stat dark"><div class="stat-num">82%</div><div class="stat-label">Phishing</div><div class="stat-sub">the model's choice</div></div>
+      </div>
+      <p class="note" style="margin-top:26px;">The largest percentage is selected, and sigmoid is the two class case of softmax.</p>
+      <div class="fn-eq" style="margin-top:22px;">
+        <div style="font-size:30px; color:var(--ink); text-align:center; margin:0;">\[ \mathrm{softmax}(\text{phishing}) = \dfrac{e^{\text{phishing}}}{e^{\text{safe}} + e^{\text{spam}} + e^{\text{phishing}}} \]</div>
+        <span class="read">Each score is exponentiated, then divided by the sum across all three, giving the 6, 12, and 82 above.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- DIVIDER · PART 03 -->
+  <section class="divider" data-background-color="#ffffff">
+    <div class="eyebrow">Part 03 of 03</div>
+    <h2 class="divider-title">The network</h2>
+    <p class="divider-sub">Many simple neurons composed together.</p>
+  </section>
+
+  <!-- 23 · LAYERS (animated) -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">Stacking neurons into layers</h2>
+    <p class="sub">Feedforward means information flows in one direction, from input to output, with no loops.</p>
+    <div class="body">
+      <div class="stage"><network-flow></network-flow></div>
+    </div>
+  </section>
+
+  <!-- 23b · LAYER MATH DEMO -->
+  <style>
+    .lm { display:flex; flex-direction:row; align-items:center; justify-content:space-between; gap:12px; width:100%; }
+    .lm-col { display:flex; flex-direction:column; gap:16px; align-items:stretch; }
+    .lm-head { font:500 24px var(--mono); color:var(--muted); text-align:center; line-height:1.3; }
+    .lm-head b { display:block; font:600 27px var(--sans); color:var(--ink); }
+    .lm-head small { display:block; font:400 24px var(--sans); color:var(--muted2); margin-top:2px; }
+    .lm-chip { background:var(--bg-alt); border-radius:12px; padding:12px 20px; text-align:center; min-width:200px; }
+    .lm-chip .nm { font:500 24px var(--sans); color:var(--body); }
+    .lm-chip .vl { font:600 30px var(--mono); color:var(--accent); margin-top:2px; }
+    .lm-neuron { background:var(--bg-alt); border-radius:16px; padding:16px 26px; min-width:500px; }
+    .lm-neuron.out { background:var(--tint-blue); }
+    .lm-nh { font:500 24px var(--mono); color:var(--muted); margin-bottom:8px; }
+    .lm-calc { font:500 25px/1.2 var(--mono); color:var(--ink); white-space:nowrap; }
+    .lm-calc .w { color:var(--accent); }
+    .lm-res { font:500 25px var(--mono); color:var(--muted); margin-top:10px; }
+    .lm-res .fire { color:var(--accent); font-weight:600; }
+    .lm-res .zero { color:var(--red); font-weight:600; }
+    .lm-res small { font:400 24px var(--sans); color:var(--muted2); }
+    .lm-arrow { display:flex; flex-direction:column; align-items:center; gap:6px; color:var(--accent); }
+    .lm-arrow .ar { font-size:40px; line-height:1; }
+    .lm-arrow .nt { font:500 24px var(--mono); color:var(--muted); text-align:center; max-width:136px; line-height:1.25; }
+    .lm-arrow .nt b { color:var(--ink); }
+  </style>
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">The same network, with the numbers</h2>
+    <p class="sub">Three features in, two hidden neurons, one output.</p>
+    <div class="body center">
+      <div class="lm">
+
+        <div class="lm-col">
+          <div class="lm-head"><b>features</b><small>the email's numbers</small></div>
+          <div class="lm-chip"><div class="nm">bad link</div><div class="vl">1</div></div>
+          <div class="lm-chip"><div class="nm">urgent tone</div><div class="vl">1</div></div>
+          <div class="lm-chip"><div class="nm">known sender</div><div class="vl">0</div></div>
+        </div>
+
+        <div class="lm-arrow"><span class="ar">→</span><span class="nt">the raw features</span></div>
+
+        <div class="lm-col">
+          <div class="lm-head"><b>hidden layer · ReLU</b><small>multiply, sum, add bias, then bend</small></div>
+          <div class="lm-neuron">
+            <div class="lm-nh">hidden neuron 1</div>
+            <div class="lm-calc">(<span class="w">0.9</span>×1) + (<span class="w">0.6</span>×1) + (<span class="w">-1.2</span>×0) + 0.0</div>
+            <div class="lm-res">= 1.5 &nbsp;&nbsp;ReLU&nbsp;→&nbsp;<span class="fire">1.5</span></div>
+          </div>
+          <div class="lm-neuron">
+            <div class="lm-nh">hidden neuron 2</div>
+            <div class="lm-calc">(<span class="w">-0.4</span>×1) + (<span class="w">0.3</span>×1) + (<span class="w">0.8</span>×0) - 0.5</div>
+            <div class="lm-res">= -0.6 &nbsp;&nbsp;ReLU&nbsp;→&nbsp;<span class="zero">0.0</span> &nbsp;<small>(negative, clipped to zero)</small></div>
+          </div>
+        </div>
+
+        <div class="lm-arrow"><span class="ar">→</span><span class="nt">now <b>1.5</b> and <b>0.0</b>, not the features</span></div>
+
+        <div class="lm-col">
+          <div class="lm-head"><b>output · sigmoid</b><small>uses the hidden layer's outputs</small></div>
+          <div class="lm-neuron out">
+            <div class="lm-nh">output neuron</div>
+            <div class="lm-calc">(<span class="w">1.1</span>×1.5) + (<span class="w">0.7</span>×0.0) + 0.2</div>
+            <div class="lm-res">= 1.85 &nbsp;&nbsp;sigmoid&nbsp;→&nbsp;<span class="fire">0.86</span></div>
+            <div class="lm-res" style="margin-top:4px;"><small>high confidence of phishing</small></div>
+          </div>
+        </div>
+
+      </div>
+      <div class="in-practice"><span class="ip-tag">in practice</span><p class="ip-text">This hand off is the essence of depth: <strong>one layer's outputs are the next layer's inputs</strong>. The output neuron never sees the raw email, only the hidden layer's transformation of it.</p></div>
+    </div>
+  </section>
+
+  <!-- 24 · HIDDEN LAYERS -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">What the hidden layers do</h2>
+    <p class="sub">Each layer builds on the previous one, composing simple patterns into higher level ones.</p>
+    <div class="body center">
+      <div class="flow">
+        <div class="step-card surface"><div class="step-eyebrow muted">what goes in</div><div class="step-name">Raw features</div><div class="step-note">links, urgency, sender, and more numbers</div></div>
+        <div class="flow-arrow">→</div>
+        <div class="step-card surface"><div class="step-eyebrow">first hidden layer</div><div class="step-name">Simple patterns</div><div class="step-note">"this link looks fake", "this tone is urgent"</div></div>
+        <div class="flow-arrow">→</div>
+        <div class="step-card surface"><div class="step-eyebrow">later hidden layer</div><div class="step-name">Bigger ideas</div><div class="step-note">"fake link + urgency + unknown sender = a classic phishing shape"</div></div>
+        <div class="flow-arrow">→</div>
+        <div class="step-card dark"><div class="step-eyebrow dim">output</div><div class="step-name">One score</div><div class="step-note">0.98 → very likely phishing</div></div>
+      </div>
+      <div class="cols" style="margin-top:46px; align-items:baseline;">
+        <p class="col col-text"><strong>More layers</strong> provide capacity for more complex patterns. That is the meaning of <strong>"deep"</strong> in deep learning.</p>
+        <p class="col note">But depth is not automatically beneficial. More layers are harder to train, require more data, and can memorize rather than generalize.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 25 · GO PLAY WITH ONE -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">Experiment with a network</h2>
+    <p class="sub">A complete neural network that trains in the browser, with the decision boundary drawn live as it learns. No setup or installation required.</p>
+    <div class="body center">
+      <p class="note" style="margin-bottom:40px;">Explore: <a href="https://playground.tensorflow.org" target="_blank" rel="noopener" style="color:var(--accent); text-decoration:none;">playground.tensorflow.org</a><a class="cite" href="#/references">[11]</a></p>
+      <div class="cards" style="gap:22px;">
+        <div class="step-card"><div class="step-name" style="margin-top:0;">Add a hidden layer</div><p class="step-note">observe the boundary bend around the harder shapes.</p></div>
+        <div class="step-card"><div class="step-name" style="margin-top:0;">Set activation to linear</div><p class="step-note">it fails on the spiral, demonstrating why a bend is needed.</p></div>
+        <div class="step-card"><div class="step-name" style="margin-top:0;">Raise the learning rate</div><p class="step-note">too high oscillates, too low converges slowly.</p></div>
+        <div class="step-card"><div class="step-name" style="margin-top:0;">Increase the noise</div><p class="step-note">observe it memorize noise instead of the pattern.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 26 · A PHISHING NETWORK -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">A network that catches phishing</h2>
+    <div class="body center">
+      <div class="flow">
+        <div class="stat"><div class="stat-num">20</div><div class="stat-label">numbers in</div><div class="stat-sub">features per email</div></div>
+        <div class="stat"><div class="stat-num accent">16</div><div class="stat-label">hidden, ReLU</div><div class="stat-sub">first combinations</div></div>
+        <div class="stat"><div class="stat-num accent">8</div><div class="stat-label">hidden, ReLU</div><div class="stat-sub">richer combinations</div></div>
+        <div class="stat dark"><div class="stat-num">1</div><div class="stat-label">output, sigmoid</div><div class="stat-sub">the phishing score</div></div>
+      </div>
+      <div class="in-practice"><span class="ip-tag">in practice</span><p class="ip-text">These layer sizes are <strong>design choices, not fixed rules</strong>. They should be justified: larger networks need more data and overfit faster, so begin small and grow only if validation supports it.</p></div>
+    </div>
+  </section>
+
+  <!-- 27 · FORWARD PASS -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">How the network produces a prediction</h2>
+    <div class="body center">
+      <div class="flow mid">
+        <div class="step-card"><div class="step-eyebrow">01</div><div class="step-name">Features go in</div><div class="step-note">the email's feature vector enters at the input</div></div>
+        <div class="flow-arrow">→</div>
+        <div class="step-card"><div class="step-eyebrow">02</div><div class="step-name">Sum and activate</div><div class="step-note">each layer sums, then applies its activation</div></div>
+        <div class="flow-arrow">→</div>
+        <div class="step-card"><div class="step-eyebrow">03</div><div class="step-name">A score comes out</div><div class="step-note">for example 0.92, high confidence of phishing</div></div>
+      </div>
+      <p style="font:500 28px var(--mono); color:var(--ink); margin-top:52px;">In code, this entire pass is <span style="color:var(--accent);">model.predict(email)</span>.</p>
+      <div class="in-practice"><span class="ip-tag">in production</span><p class="ip-text">This input to output pass is the <strong>forward pass</strong>: inexpensive and fast. The weights that make it accurate must be learned first, a topic in its own right.</p></div>
+    </div>
+  </section>
+
+  <!-- 28 · GLOSSARY -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">Key terms, in plain words</h2>
+    <div class="body center">
+      <div class="cols gap-lg">
+        <div class="col" style="display:flex; flex-direction:column; gap:26px;">
+          <div><div style="font:600 30px var(--sans); color:var(--accent);">Feature</div><p class="col-text" style="font-size:27px; margin-top:6px;">one number describing the email, such as the count of unusual links.</p></div>
+          <div><div style="font:600 30px var(--sans); color:var(--accent);">Neuron</div><p class="col-text" style="font-size:27px; margin-top:6px;">weights a few features, sums them, and returns one number.</p></div>
+          <div><div style="font:600 30px var(--sans); color:var(--accent);">Weight</div><p class="col-text" style="font-size:27px; margin-top:6px;">the contribution of one feature, akin to a gain control.</p></div>
+        </div>
+        <div class="col-rule"></div>
+        <div class="col" style="display:flex; flex-direction:column; gap:26px;">
+          <div><div style="font:600 30px var(--sans); color:var(--accent);">Bias</div><p class="col-text" style="font-size:27px; margin-top:6px;">the neuron's baseline tendency to fire, before any feature.</p></div>
+          <div><div style="font:600 30px var(--sans); color:var(--accent);">Activation</div><p class="col-text" style="font-size:27px; margin-top:6px;">reshapes the total into a bounded score and introduces a bend.</p></div>
+          <div><div style="font:600 30px var(--sans); color:var(--accent);">Forward pass</div><p class="col-text" style="font-size:27px; margin-top:6px;">passing an email through the network from input to output to obtain a score.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 29 · RECAP -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">The four core ideas</h2>
+    <div class="body center">
+      <ol class="agenda">
+        <li>An email becomes a short list of <strong>numbers</strong>, its features.</li>
+        <li>A <strong>neuron</strong> weights those features, sums them, and shapes the result.</li>
+        <li>A <strong>network</strong> stacks neurons, composing simple patterns into higher level ones.</li>
+        <li>Passing an email through, input to output, yields one score, the <strong>forward pass</strong>.</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- 30 · REFERENCES -->
+  <section id="references" data-background-color="#ffffff">
+    <h2 class="slide-title">References and where to go deeper</h2>
+    <div class="body center">
+      <div class="refs">
+        <div class="ref-col">
+          <div class="ref-group">
+            <div class="ref"><span class="ref-n">[1]</span>Nazario. Phishing corpus. <span class="src"><a href="https://monkey.org/~jose/phishing/" target="_blank" rel="noopener">monkey.org/~jose/phishing</a></span></div>
+            <div class="ref"><span class="ref-n">[2]</span>Klimt &amp; Yang (2004). The Enron corpus. <span class="src">ECML. <a href="https://www.cs.cmu.edu/~enron/" target="_blank" rel="noopener">cs.cmu.edu/~enron</a></span></div>
+            <div class="ref"><span class="ref-n">[3]</span>Azevedo et al. (2009). Equal numbers of neuronal and nonneuronal cells in the human brain. <span class="src"><a href="https://doi.org/10.1002/cne.21974" target="_blank" rel="noopener">J. Comparative Neurology 513(5).</a></span></div>
+            <div class="ref"><span class="ref-n">[4]</span>McCulloch &amp; Pitts (1943). A logical calculus of the ideas immanent in nervous activity. <span class="src"><a href="https://doi.org/10.1007/BF02478259" target="_blank" rel="noopener">Bull. Math. Biophysics 5.</a></span></div>
+            <div class="ref"><span class="ref-n">[5]</span>Rosenblatt (1958). The perceptron. <span class="src"><a href="https://doi.org/10.1037/h0042519" target="_blank" rel="noopener">Psychological Review 65(6).</a></span></div>
+            <div class="ref"><span class="ref-n">[6]</span>Minsky &amp; Papert (1969). Perceptrons. <span class="src"><a href="https://doi.org/10.7551/mitpress/11301.001.0001" target="_blank" rel="noopener">MIT Press.</a></span></div>
+            <div class="ref"><span class="ref-n">[7]</span>Rumelhart, Hinton &amp; Williams (1986). Learning representations by back-propagating errors. <span class="src"><a href="https://doi.org/10.1038/323533a0" target="_blank" rel="noopener">Nature 323.</a></span></div>
+          </div>
+        </div>
+        <div class="ref-col">
+          <div class="ref-group">
+            <div class="ref"><span class="ref-n">[8]</span>Krizhevsky, Sutskever &amp; Hinton (2012). ImageNet classification with deep CNNs. <span class="src"><a href="https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks" target="_blank" rel="noopener">NeurIPS.</a></span></div>
+            <div class="ref"><span class="ref-n">[9]</span>Cybenko (1989). Approximation by superpositions of a sigmoidal function. <span class="src"><a href="https://doi.org/10.1007/BF02551274" target="_blank" rel="noopener">Math. Control Signals Systems 2(4).</a></span></div>
+            <div class="ref"><span class="ref-n">[10]</span>Glorot, Bordes &amp; Bengio (2011). Deep sparse rectifier neural networks. <span class="src"><a href="https://proceedings.mlr.press/v15/glorot11a.html" target="_blank" rel="noopener">AISTATS.</a></span></div>
+            <div class="ref"><span class="ref-n">[11]</span>TensorFlow Playground. <span class="src"><a href="https://playground.tensorflow.org" target="_blank" rel="noopener">playground.tensorflow.org</a></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+</div>
+
+<script src="../assets/reveal/reveal.js"></script>
+<script src="../assets/version.js"></script>
+<script src="../assets/deck-chrome.js"></script>
+<script src="../assets/visuals/neuron-flow.js"></script>
+<script src="../assets/visuals/network-flow.js"></script>
+<script src="../assets/visuals/plots.js"></script>
+<script src="../assets/katex/katex.min.js"></script>
+<script src="../assets/katex/auto-render.min.js"></script>
+<script>
+  // Typeset LaTeX in \( \) (inline) and \[ \] (display) across all slides.
+  renderMathInElement(document.body, {
+    delimiters: [
+      { left: '\\[', right: '\\]', display: true },
+      { left: '\\(', right: '\\)', display: false },
+    ],
+    throwOnError: false,
+  });
+  Reveal.initialize({
+    width: 1920,
+    height: 1080,
+    margin: 0,
+    center: false,
+    hash: true,
+    history: true,
+    transition: 'fade',
+    plugins: [],
+  });
+  Reveal.on('slidechanged', (e) => {
+    if (window.__drawPlots) window.__drawPlots();
+    e.currentSlide.querySelectorAll('neuron-flow, network-flow, word-map').forEach((v) => {
+      const btn = v.shadowRoot && v.shadowRoot.querySelector('#replay');
+      if (btn) btn.click();
+    });
+  });
+</script>
+</body>
+</html>

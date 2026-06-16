@@ -2,6 +2,12 @@
 
 Learn the fundamentals of deep learning for cybersecurity, and build models that tackle real problems like phishing, malware, and intrusion detection. Intuition first, for professionals and academics.
 
+## Topics
+
+| Topic | Description |
+|------|-------|
+| [Neural Networks](docs/neural-networks/) | The neuron, activations, and how a network turns features into a prediction |
+
 ## License
 
 The lecture content, theme, and visuals are licensed under [CC BY-NC-SA 4.0](LICENSE.md). You may share and adapt the material for non-commercial purposes with attribution, sharing derivatives under the same terms. Commercial use (paid courses, print editions, translations) requires separate
