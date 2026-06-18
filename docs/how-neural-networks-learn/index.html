@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>How Neural Networks Learn — Deep Learning for Cyber</title>
+<link rel="stylesheet" href="../assets/reveal/reset.css">
+<link rel="stylesheet" href="../assets/reveal/reveal.css">
+<link rel="stylesheet" href="../assets/fonts/fonts.css">
+<link rel="stylesheet" href="../assets/theme/applied-ml.css">
+<link rel="stylesheet" href="../assets/katex/katex.min.css">
+<style>
+  /* Reader-text normalization: one body size across slides. */
+  .reveal .col-text { font-size: 32px; }
+</style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+  <!-- 01 · COVER -->
+  <section class="cover" data-background-color="#ffffff">
+    <div>
+      <h1 class="cover-title">How Neural<br>Networks Learn</h1>
+      <p class="cover-sub">Loss, gradient descent, and backpropagation, then training a phishing filter in Keras.</p>
+    </div>
+    <div class="deck-footer">Deep Learning for Cyber&nbsp;&nbsp;·&nbsp;&nbsp;<a class="name" href="https://laplacef.me" target="_blank" rel="noopener">Francisco Laplace</a></div>
+  </section>
+
+  <!-- 02 · AGENDA -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">What this session covers</h2>
+    <div class="body center">
+      <ol class="agenda">
+        <li>The loss, one number for how wrong a prediction is</li>
+        <li>Gradient descent, stepping the weights downhill</li>
+        <li>Backpropagation, assigning each weight its share of the error</li>
+        <li>Training and evaluating a working filter in Keras</li>
+      </ol>
+      <p class="note" style="margin-top:36px;">The starting point is a network that can already produce a prediction. The objective here is making that prediction accurate.</p>
+    </div>
+  </section>
+
+  <!-- DIVIDER · PART 01 -->
+  <section class="divider" data-background-color="#ffffff">
+    <div class="eyebrow">Part 01 of 02</div>
+    <h2 class="divider-title">Learning</h2>
+    <p class="divider-sub">How the network improves from its own errors.</p>
+  </section>
+
+  <!-- 03 · LOSS -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">Measuring how wrong a prediction is</h2>
+    <div class="body center">
+      <div class="cols gap-lg top">
+        <div class="col">
+          <p class="col-text" style="margin-bottom:34px;">The <strong>loss</strong> is a single number measuring how far the prediction is from the truth, analogous to a golf score. Lower is better, and learning is the process of reducing it.</p>
+          <div class="outcome" style="margin-bottom:18px;"><b class="g">Confident and correct</b> <span>→ loss near zero</span></div>
+          <div class="outcome"><b class="r">Confident and wrong</b> <span>→ loss is large</span></div>
+        </div>
+        <div class="col panel dark">
+          <div class="panel-label">For the curious</div>
+          <p>One common scoring rule: when an email is genuinely phishing, the penalty is small if the predicted score was close to 1, and grows quickly as the score drops toward 0.</p>
+          <p class="dim" style="font-size:24px; margin-top:24px;">This rule is named cross entropy, and it is fundamentally a measure of surprise. A confident, correct prediction is barely surprised and pays almost nothing. A confident, wrong prediction is heavily surprised and pays a great deal. Binary denotes two classes, the partner to the sigmoid score.</p>
+          <p class="dim" style="font-size:24px; margin-top:18px;">With true label <span style="white-space:nowrap;">\( y \)</span> in <span style="white-space:nowrap;">\( \{0, 1\} \)</span> and predicted score <span style="white-space:nowrap;">\( p \)</span>, it reads <span style="color:var(--bg);">\( \text{loss} = -[\, y \log p + (1 - y) \log(1 - p) \,] \)</span>.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 04 · WALKING DOWNHILL -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">Learning as a descent downhill</h2>
+    <div class="body center">
+      <div class="cols gap-lg" style="align-items:center;">
+        <p class="col col-text" style="font-size:32px;">Consider the analogue of descending a foggy hill toward the lowest valley. Long range visibility is absent, but the local slope of the ground is felt, and a step is taken downhill. Repeated, the steps reach the bottom.<br><br>The hill is the loss. Each setting of the weights is a position on it, and the height is how wrong the network is. The objective is the <strong>lowest valley.</strong></p>
+        <div class="col plot-card" style="flex:0 0 600px; align-items:center;">
+          <div class="plot-label" style="align-self:flex-start;">loss as a hill</div>
+          <canvas data-plot="bowl" data-w="536" data-h="320" style="width:536px; height:320px;"></canvas>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 05 · GRADIENT DESCENT -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">Gradient descent, step by step</h2>
+    <p class="sub">Gradient is the technical term for slope, and descent means moving down it.</p>
+    <div class="body center">
+      <div class="cards">
+        <div class="card"><div style="font:600 36px var(--sans); color:var(--accent);">Measure the slope</div><p>the direction of steepest increase, and its steepness at this position.</p></div>
+        <div class="card"><div style="font:600 36px var(--sans); color:var(--accent);">Step downhill</div><p>each weight is nudged slightly in the opposite direction.</p></div>
+        <div class="card"><div style="font:600 36px var(--sans); color:var(--accent);">Repeat</div><p>the steps continue until the loss stops decreasing.</p></div>
+      </div>
+      <div class="in-practice"><span class="ip-tag">from the paper</span><p class="ip-text">Stepping downhill on noisy, sampled data is <strong>stochastic approximation</strong>, introduced by Robbins &amp; Monro (1951)<a class="cite" href="#/references">[1]</a>. Every optimizer in deep learning is a descendant of that idea.</p></div>
+    </div>
+  </section>
+
+  <!-- 06 · UPDATE RULE -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">How one weight is updated</h2>
+    <p class="sub">Stated plainly, the new weight is the old weight minus a small step in the downhill direction.</p>
+    <div class="body center">
+      <div class="bigformula"><span class="b">new weight</span>&nbsp;=&nbsp;<span class="b">old weight</span>&nbsp;<span class="r">−</span>&nbsp;<span class="r">small step</span>&nbsp;×&nbsp;<span style="color:var(--ink);">slope</span></div>
+      <div style="font-size:36px; color:var(--ink); text-align:center; margin:34px 0 0;">\[ w \leftarrow w - \eta \, \dfrac{\partial L}{\partial w} \]</div>
+      <p class="note" style="text-align:center; margin-top:14px;">The same statement in symbols: the weight <span style="white-space:nowrap;">\( w \)</span>, the learning rate <span style="white-space:nowrap;">\( \eta \)</span>, and the slope of the loss <span style="white-space:nowrap;">\( L \)</span> for that weight.</p>
+      <div class="annots" style="margin-top:60px;">
+        <div class="col"><div class="annot-head red">the minus</div><p>moves opposite to the slope, the downhill direction.</p></div>
+        <div class="col"><div class="annot-head red">small step</div><p>the distance moved each time, the learning rate, covered next.</p></div>
+        <div class="col"><div class="annot-head ink">slope</div><p>the downhill direction for this one weight.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 07 · LEARNING RATE -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">How large a step to take</h2>
+    <p class="sub">The step size is named the <strong>learning rate</strong>, and setting it correctly is what makes or breaks training.</p>
+    <div class="body center">
+      <div class="cards">
+        <div class="card"><div style="font:600 36px var(--sans); color:var(--ink);">Tiny steps</div><p style="color:var(--muted);">convergence is reached eventually, but painfully slowly.</p></div>
+        <div class="card tint-blue"><div style="font:600 36px var(--sans); color:var(--accent);">Just right</div><p>a steady pace glides down into the valley.</p></div>
+        <div class="card"><div style="font:600 36px var(--sans); color:var(--red);">Giant steps</div><p style="color:var(--muted);">the bottom is overshot and the path bounces around, or diverges entirely.</p></div>
+      </div>
+      <div class="in-practice" style="margin-top:40px;"><span class="ip-tag">from the paper</span><p class="ip-text">The step size is almost never chosen by hand. <strong>Adam sets it automatically</strong>, giving every weight its own adaptive step. Kingma &amp; Ba (2015)<a class="cite" href="#/references">[2]</a> describe "an algorithm for first-order gradient-based optimization... based on <strong>adaptive estimates of lower-order moments</strong>," the running mean and variance of the gradient. The sensible default optimizer to this day.</p></div>
+      <p class="note" style="margin-top:18px;">Practical techniques for tuning steps and inputs are collected in LeCun, Bottou, Orr &amp; Müller (1998)<a class="cite" href="#/references">[3]</a>, a standard reference.</p>
+    </div>
+  </section>
+
+  <!-- 08 · BACKPROP BIG IDEA -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">Backpropagation: sharing the blame</h2>
+    <div class="body center">
+      <p class="lead">Gradient descent requires the slope for <em>every</em> weight, and there are thousands. Backpropagation computes them all at once. Analogous to a coach reviewing a loss, it traces the error backward and assigns each weight its fair share of the blame, so each one knows how to improve.</p>
+      <div class="in-practice" style="margin-top:40px;"><span class="ip-tag">from the paper</span><p class="ip-text">The method that revived the field: Rumelhart, Hinton &amp; Williams (1986)<a class="cite" href="#/references">[4]</a> describe a procedure that <strong>repeatedly adjusts the weights so as to minimize the difference between the network's actual output and the desired output</strong>. That one trick is what makes deep networks trainable.</p></div>
+    </div>
+  </section>
+
+  <!-- 09 · BACKPROP FLOW -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">Tracing the blame backward</h2>
+    <div class="body center">
+      <div class="flow mid">
+        <div class="step-card"><div class="step-eyebrow">forward →</div><div class="step-name">Make a prediction</div><div class="step-note">the email runs through the network</div></div>
+        <div class="step-card"><div class="step-eyebrow" style="color:var(--red);">compare</div><div class="step-name">Measure the error</div><div class="step-note">prediction against the true label, the loss</div></div>
+        <div class="step-card dark"><div class="step-eyebrow dim">← backward</div><div class="step-name">Assign the blame</div><div class="step-note">each weight receives its part of the error</div></div>
+      </div>
+      <p class="note" style="margin-top:50px;">The term chain rule names the rule for distributing the blame across the layers, and nothing more.</p>
+    </div>
+  </section>
+
+  <!-- 10 · ONE ROUND -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">One full round of learning</h2>
+    <div class="body center">
+      <div class="cyclerow">
+        <div class="cnode"><div class="disc blue">1</div><div class="lab">Forward</div><div class="sub2">make a prediction</div></div>
+        <span class="cycle-arrow">→</span>
+        <div class="cnode"><div class="disc red">2</div><div class="lab">Loss</div><div class="sub2">how wrong</div></div>
+        <span class="cycle-arrow">→</span>
+        <div class="cnode"><div class="disc ink">3</div><div class="lab">Backward</div><div class="sub2">assign the blame</div></div>
+        <span class="cycle-arrow">→</span>
+        <div class="cnode"><div class="disc blue">4</div><div class="lab">Update</div><div class="sub2">adjust the weights</div></div>
+        <span class="cycle-arrow">↻</span>
+      </div>
+      <p class="note" style="text-align:center; margin-top:56px;">This loop repeats over many emails, many times. That is training.</p>
+    </div>
+  </section>
+
+  <!-- 11 · EPOCHS & BATCHES -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">Epochs and batches</h2>
+    <p class="sub">The analogue is studying from a stack of flashcards.</p>
+    <div class="body center">
+      <div class="cols">
+        <div class="col step-card" style="padding:48px;"><div class="step-eyebrow">batch</div><div style="font:600 36px var(--sans); color:var(--ink); margin:14px 0 12px;">a handful of cards</div><p class="col-text" style="font-size:32px;">A small group of emails, say 32, is processed before the weights are adjusted. This is steadier and faster than one at a time.</p></div>
+        <div class="col step-card" style="padding:48px;"><div class="step-eyebrow">epoch</div><div style="font:600 36px var(--sans); color:var(--ink); margin:14px 0 12px;">one full pass</div><p class="col-text" style="font-size:32px;">One pass through the entire stack. Setting <span class="code-inline">epochs = 20</span> specifies twenty passes.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 12 · TRAIN / VAL / TEST -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">Training, validation, and test data</h2>
+    <p class="sub">The network is never graded on the emails it learned from, so the labeled data is split into three parts.</p>
+    <div class="body center">
+      <div class="flow">
+        <div class="step-card" style="flex:7;"><div class="step-eyebrow">about 70%</div><div class="step-name">Training</div><p class="step-note">the study material the network learns from</p></div>
+        <div class="step-card" style="flex:3;"><div class="step-eyebrow">about 15%</div><div class="step-name">Validation</div><p class="step-note">practice quizzes, used to tune the design choices</p></div>
+        <div class="step-card dark" style="flex:3;"><div class="step-eyebrow dim">about 15%</div><div class="step-name">Test</div><p class="step-note">the final exam, opened once and never examined beforehand</p></div>
+      </div>
+      <p style="font:500 28px var(--mono); color:var(--ink); margin-top:48px;">This is why <span style="color:var(--accent);">fit(...)</span> sets some data aside. It keeps the grade honest.</p>
+      <div class="in-practice"><span class="ip-tag">in an interview</span><p class="ip-text">A classic question: <strong>why a separate test set?</strong> Because tuning on it leaks the answer. The test set provides the single honest estimate of behavior on mail the filter has never seen.</p></div>
+    </div>
+  </section>
+
+  <!-- DIVIDER · PART 02 -->
+  <section class="divider" data-background-color="#ffffff">
+    <div class="eyebrow">Part 02 of 02</div>
+    <h2 class="divider-title">Building and training the network</h2>
+    <p class="divider-sub">Writing the network, training it, and establishing when to trust it.</p>
+  </section>
+
+  <!-- 13 · KERAS MODEL -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">Writing the network in Keras</h2>
+    <div class="body center">
+      <div class="code-row">
+<pre class="code" style="flex:1.3; font-size:26px;"><span class="k">import</span> tensorflow <span class="k">as</span> tf
+<span class="k">from</span> tensorflow <span class="k">import</span> keras
+
+model = keras.<span class="fn">Sequential</span>([
+  keras.layers.<span class="fn">Dense</span>(<span class="n">16</span>, activation=<span class="s">"relu"</span>,
+              input_shape=(<span class="n">20</span>,)),
+  keras.layers.<span class="fn">Dense</span>(<span class="n">8</span>,  activation=<span class="s">"relu"</span>),
+  keras.layers.<span class="fn">Dense</span>(<span class="n">1</span>,  activation=<span class="s">"sigmoid"</span>),
+])</pre>
+        <div class="code-annot">
+          <div><div class="step-eyebrow">Sequential</div><p>a simple stack of layers, front to back.</p></div>
+          <div><div class="step-eyebrow">Dense(16, "relu")</div><p>16 neurons, each wired to every input.</p></div>
+          <div><div class="step-eyebrow">input_shape=(20,)</div><p>20 features per email come in.</p></div>
+          <div><div class="step-eyebrow">Dense(1, "sigmoid")</div><p>one output, the phishing score.</p></div>
+        </div>
+      </div>
+      <p class="note" style="margin-top:36px;">All of this runs on TensorFlow and Keras<a class="cite" href="#/references">[5]</a>, the everyday tools for building and training networks like this.</p>
+    </div>
+  </section>
+
+  <!-- 14 · TRAINING -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">Teaching the network</h2>
+    <div class="body center">
+      <div class="code-row">
+<pre class="code" style="flex:1.3;">model.<span class="fn">compile</span>(
+  optimizer=<span class="s">"adam"</span>,
+  loss=<span class="s">"binary_crossentropy"</span>,
+  metrics=[<span class="s">"accuracy"</span>],
+)
+
+history = model.<span class="fn">fit</span>(
+  X_train, y_train,
+  epochs=<span class="n">20</span>,
+  batch_size=<span class="n">32</span>,
+  validation_split=<span class="n">0.2</span>,
+)</pre>
+        <div class="code-annot">
+          <div><div class="step-eyebrow">optimizer="adam"</div><p>smart gradient descent that tunes the step size for each weight automatically.</p></div>
+          <div><div class="step-eyebrow">loss="binary_crossentropy"</div><p>the phishing scoring rule from the loss slide, the surprise measure that punishes confident mistakes. Binary because there are two answers.</p></div>
+          <div><div class="step-eyebrow">fit(...)</div><p>runs our four step loop, over and over.</p></div>
+          <div><div class="step-eyebrow">validation_split=0.2</div><p>holds back 20% to check honesty on unseen mail.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 15 · PUTTING IT TO WORK -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">Putting the filter to work</h2>
+    <p class="sub">A new email arrives. Applying the trained network takes three steps, all of them already covered.</p>
+    <div class="body center">
+      <div class="code-row">
+<pre class="code" style="flex:1.35;">new_email = <span class="s">"URGENT: verify your account now"</span>
+x = <span class="fn">email_to_features</span>(new_email)
+
+score = model.<span class="fn">predict</span>([x])[<span class="n">0</span>][<span class="n">0</span>]   <span class="c"># -> 0.92</span>
+
+<span class="k">if</span> score &gt;= <span class="n">0.5</span>:
+    <span class="fn">quarantine</span>(new_email)</pre>
+        <div class="code-annot">
+          <div><div class="step-eyebrow">same features</div><p>the new email becomes numbers, exactly as before.</p></div>
+          <div><div class="step-eyebrow">predict</div><p>runs the forward pass. 0.92 indicates 92% confidence of phishing.</p></div>
+          <div><div class="step-eyebrow">the 0.5 cutoff</div><p>is a choice: a higher value is stricter, a lower one is more permissive.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 16 · RESULTS -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">Whether the network actually learned</h2>
+    <div class="body center">
+      <div class="cols gap-lg" style="align-items:center;">
+        <div class="col plot-card" style="flex:0 0 620px;">
+          <div class="plot-label">loss over the rounds</div>
+          <canvas data-plot="curves" data-w="556" data-h="320" style="width:556px; height:320px;"></canvas>
+          <div class="plot-legend">
+            <span><i style="background:var(--accent);"></i> training</span>
+            <span><i style="background:var(--red);"></i> validation</span>
+          </div>
+        </div>
+        <p class="col col-text" style="font-size:32px;">As the rounds progress, the <strong>loss should fall</strong> and accuracy should rise.<br><br>The <strong style="color:var(--red);">validation</strong> line, measured on emails the network never trained on, is the one to watch. It is the honest report card. If it continues to fall as well, the network is genuinely learning rather than memorizing.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 17 · GLOSSARY -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">Key terms, in plain words</h2>
+    <div class="body center">
+      <div class="cols gap-lg">
+        <div class="col" style="display:flex; flex-direction:column; gap:26px;">
+          <div><div style="font:600 30px var(--sans); color:var(--accent);">Loss</div><p class="col-text" style="font-size:27px; margin-top:6px;">a score for how wrong the guess was. Lower is better.</p></div>
+          <div><div style="font:600 30px var(--sans); color:var(--accent);">Gradient descent</div><p class="col-text" style="font-size:27px; margin-top:6px;">stepping the weights downhill to make the loss smaller.</p></div>
+          <div><div style="font:600 30px var(--sans); color:var(--accent);">Learning rate</div><p class="col-text" style="font-size:27px; margin-top:6px;">how big each downhill step is, usually set by Adam.</p></div>
+        </div>
+        <div class="col-rule"></div>
+        <div class="col" style="display:flex; flex-direction:column; gap:26px;">
+          <div><div style="font:600 30px var(--sans); color:var(--accent);">Backpropagation</div><p class="col-text" style="font-size:27px; margin-top:6px;">assigning the blame backward so every weight knows how to improve.</p></div>
+          <div><div style="font:600 30px var(--sans); color:var(--accent);">Epoch / batch</div><p class="col-text" style="font-size:27px; margin-top:6px;">one full pass through the data; a small group adjusted at a time.</p></div>
+          <div><div style="font:600 30px var(--sans); color:var(--accent);">Validation</div><p class="col-text" style="font-size:27px; margin-top:6px;">mail held back to check honest progress during training.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 18 · RECAP -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">The four core ideas</h2>
+    <div class="body center">
+      <ol class="agenda">
+        <li>The <strong>loss</strong> measures how wrong a prediction is.</li>
+        <li><strong>Gradient descent</strong> steps the weights downhill to reduce it.</li>
+        <li><strong>Backpropagation</strong> assigns the blame so every weight knows its part.</li>
+        <li>The loop repeats over many rounds, with <strong>validation</strong> watched to keep it honest.</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- 19 · REFERENCES -->
+  <section id="references" data-background-color="#ffffff">
+    <h2 class="slide-title">References and where to go deeper</h2>
+    <div class="body center">
+      <div class="refs">
+        <div class="ref-col">
+          <div class="ref-group">
+            <div class="ref"><span class="ref-n">[1]</span>Robbins &amp; Monro (1951). A stochastic approximation method. <span class="src"><a href="https://doi.org/10.1214/aoms/1177729586" target="_blank" rel="noopener">Ann. Math. Statist. 22(3).</a></span></div>
+            <div class="ref"><span class="ref-n">[2]</span>Kingma &amp; Ba (2015). Adam: a method for stochastic optimization. <span class="src"><a href="https://doi.org/10.48550/arXiv.1412.6980" target="_blank" rel="noopener">ICLR.</a></span></div>
+            <div class="ref"><span class="ref-n">[3]</span>LeCun, Bottou, Orr &amp; Müller (1998). Efficient BackProp. <span class="src"><a href="https://doi.org/10.1007/3-540-49430-8_2" target="_blank" rel="noopener">Neural Networks: Tricks of the Trade.</a></span></div>
+          </div>
+        </div>
+        <div class="ref-col">
+          <div class="ref-group">
+            <div class="ref"><span class="ref-n">[4]</span>Rumelhart, Hinton &amp; Williams (1986). Learning representations by back-propagating errors. <span class="src"><a href="https://doi.org/10.1038/323533a0" target="_blank" rel="noopener">Nature 323.</a></span></div>
+            <div class="ref"><span class="ref-n">[5]</span>TensorFlow / Keras; scikit-learn <span class="src">(<a href="https://jmlr.org/papers/v12/pedregosa11a.html" target="_blank" rel="noopener">Pedregosa et al., 2011, JMLR</a>).</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+</div>
+
+<script src="../assets/reveal/reveal.js"></script>
+<script src="../assets/version.js"></script>
+<script src="../assets/deck-chrome.js"></script>
+<script src="../assets/visuals/plots.js"></script>
+<script src="../assets/katex/katex.min.js"></script>
+<script src="../assets/katex/auto-render.min.js"></script>
+<script>
+  // Typeset LaTeX in \( \) (inline) and \[ \] (display) across all slides.
+  renderMathInElement(document.body, {
+    delimiters: [
+      { left: '\\[', right: '\\]', display: true },
+      { left: '\\(', right: '\\)', display: false },
+    ],
+    throwOnError: false,
+  });
+  Reveal.initialize({
+    width: 1920,
+    height: 1080,
+    margin: 0,
+    center: false,
+    hash: true,
+    history: true,
+    transition: 'fade',
+    plugins: [],
+  });
+  Reveal.on('slidechanged', () => {
+    if (window.__drawPlots) window.__drawPlots();
+  });
+</script>
+</body>
+</html>

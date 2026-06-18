@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0 - 2026-06-18
+
+### Added
+
+- Add the how neural networks learn deck covering loss, gradient descent, and backpropagation
+
 ## 0.1.0 - 2026-06-16
 
 _Initial release._
