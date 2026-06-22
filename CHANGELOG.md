@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0 - 2026-06-22
+
+### Added
+
+- Add the training deep networks deck covering regularization, optimizers, and class imbalance
+
 ## 0.2.0 - 2026-06-18
 
 ### Added

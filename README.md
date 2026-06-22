@@ -8,6 +8,7 @@ Learn the fundamentals of deep learning for cybersecurity, and build models that
 |------|-------|
 | [Neural Networks](docs/neural-networks/) | The neuron, activations, and how a network turns features into a prediction |
 | [How Neural Networks Learn](docs/how-neural-networks-learn/) | How loss, gradient descent, and backprop let a network learn from its mistakes |
+| [Training Deep Networks](docs/training-deep-networks/) | Regularization, optimization, and the class imbalance that defines security data |
 
 ## License
 

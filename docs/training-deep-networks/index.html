@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Training Deep Networks — Deep Learning for Cyber</title>
+<link rel="stylesheet" href="../assets/reveal/reset.css">
+<link rel="stylesheet" href="../assets/reveal/reveal.css">
+<link rel="stylesheet" href="../assets/fonts/fonts.css">
+<link rel="stylesheet" href="../assets/theme/applied-ml.css">
+<link rel="stylesheet" href="../assets/katex/katex.min.css">
+<style>
+  /* Reader-text normalization: one body size across slides. */
+  .reveal .col-text { font-size: 32px; }
+  /* Class-imbalance dot grid (slide 12): 100 emails, one is phishing. */
+  .reveal .imbal { display: grid; grid-template-columns: repeat(10, 1fr); gap: 13px; width: 380px; }
+  .reveal .imbal span { width: 28px; height: 28px; border-radius: 50%; background: #dfe3f7; border: 1px solid #cdd3f0; }
+  .reveal .imbal span.bad { background: var(--red); border-color: var(--red); animation: imbalpulse 1.7s ease-in-out infinite; }
+  @keyframes imbalpulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(192,57,43,.5); } 50% { box-shadow: 0 0 0 9px rgba(192,57,43,0); } }
+</style>
+</head>
+<body>
+<div class="reveal">
+<div class="slides">
+
+  <!-- 01 · COVER -->
+  <section class="cover" data-background-color="#ffffff">
+    <div>
+      <h1 class="cover-title">Training<br>Deep Networks</h1>
+      <p class="cover-sub">Preventing a model from memorizing, smoothing its training, and confronting the class imbalance at the heart of security data.</p>
+    </div>
+    <div class="deck-footer">Deep Learning for Cyber&nbsp;&nbsp;·&nbsp;&nbsp;<a class="name" href="https://laplacef.me" target="_blank" rel="noopener">Francisco Laplace</a></div>
+  </section>
+
+  <!-- 02 · AGENDA -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">What this session covers</h2>
+    <div class="body center">
+      <ol class="agenda">
+        <li>When a model memorizes instead of generalizing</li>
+        <li>Regularization, dropout, weight decay, and early stopping</li>
+        <li>Smoother training, scaling, normalization, and optimizers</li>
+        <li>The security problem, class imbalance and the threshold</li>
+      </ol>
+      <p class="note" style="margin-top:36px;">A network that trains is the easy part. A network that can be trusted on real, rare, adversarial mail is the actual work.</p>
+    </div>
+  </section>
+
+  <!-- 03 · THE PROBLEM -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">It trained, and still does not work</h2>
+    <div class="body center">
+      <div class="cols gap-lg" style="align-items:center;">
+        <p class="col col-text" style="font-size:32px;">The network is built, training is run, and the accuracy climbs to <strong>99%</strong>.<br><br>Yet it misses nearly every real phishing email. The loss fell, but the model learned the wrong lesson. This session concerns the gap between <strong>a model that trains</strong> and <strong>a model that works</strong>.</p>
+        <div class="col" style="display:flex; flex-direction:column; gap:20px;">
+          <div class="card tint-red"><div style="font:600 32px var(--sans); color:var(--red);">Memorized the training set</div><p style="font:400 26px/1.45 var(--sans); color:var(--body); margin:10px 0 0;">excels on practice, fails on fresh mail</p></div>
+          <div class="card tint-red"><div style="font:600 32px var(--sans); color:var(--red);">Learned to always answer safe</div><p style="font:400 26px/1.45 var(--sans); color:var(--body); margin:10px 0 0;">because phishing is rare, that alone scores 99%</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DIVIDER · PART 01 -->
+  <section class="divider" data-background-color="#ffffff">
+    <div class="eyebrow">Part 01 of 03</div>
+    <h2 class="divider-title">Generalization</h2>
+    <p class="divider-sub">Preventing the network from memorizing the training emails.</p>
+  </section>
+
+  <!-- 04 · OVERFITTING -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">When a model memorizes</h2>
+    <div class="body center">
+      <div class="cols gap-lg" style="align-items:center;">
+        <div class="col plot-card" style="flex:0 0 600px;">
+          <div class="plot-label">training vs validation loss</div>
+          <canvas data-plot="curves" data-w="536" data-h="310" style="width:536px; height:310px;"></canvas>
+          <div class="plot-legend">
+            <span><i style="background:var(--accent);"></i> training</span>
+            <span><i style="background:var(--red);"></i> validation</span>
+          </div>
+        </div>
+        <p class="col col-text" style="font-size:32px;">When the training loss keeps falling but the <strong style="color:var(--red);">validation loss flattens out above it</strong>, that gap is the network memorizing the exact training emails instead of the pattern.<br><br>The analogue is a student who memorized the answer key: perfect on the practice test, lost on the real exam. The gap between the two lines is the signal.</p>
+      </div>
+      <div class="in-practice"><span class="ip-tag">security</span><p class="ip-text">An overfit filter clings to last month's phishing wording. The moment attackers rephrase, it collapses, so generalization is a <strong>security property</strong>, not merely a matter of tidiness.</p></div>
+    </div>
+  </section>
+
+  <!-- 05 · DROPOUT -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">Dropout, relying on no single feature</h2>
+    <p class="sub">During training, a random fraction of the neurons switches off on every pass, so the network cannot lean on any single feature. At test time every neuron returns.</p>
+    <div class="body">
+      <div class="cols gap-lg" style="align-items:center;">
+        <div class="col" style="flex:0 0 740px; height:420px;"><dropout-net></dropout-net></div>
+        <div class="col">
+<pre class="code">keras.layers.<span class="fn">Dense</span>(<span class="n">16</span>, activation=<span class="s">"relu"</span>),
+keras.layers.<span class="fn">Dropout</span>(<span class="n">0.3</span>),   <span class="c"># drop 30% each pass</span>
+keras.layers.<span class="fn">Dense</span>(<span class="n">8</span>,  activation=<span class="s">"relu"</span>),</pre>
+          <p class="col-text" style="font-size:30px; margin-top:24px;">The analogue is a team that rehearses with random members sitting out. No one becomes irreplaceable, so the group stays robust when any one is absent.</p>
+        </div>
+      </div>
+      <div class="in-practice"><span class="ip-tag">from the paper</span><p class="ip-text">Srivastava et al. (2014)<a class="cite" href="#/references">[2]</a>: "the key idea is to <strong>randomly drop units (along with their connections) from the neural network during training</strong>," which keeps neurons from co-adapting and sharply cuts overfitting.</p></div>
+      <p class="note" style="margin-top:22px;">The code throughout this deck uses Keras, scikit-learn, and imbalanced-learn.<a class="cite" href="#/references">[1]</a></p>
+    </div>
+  </section>
+
+  <!-- 06 · WEIGHT DECAY -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">Weight decay, keeping the weights small</h2>
+    <p class="sub">A small penalty on large weights is added to the loss. The network now has two objectives: fit the data and keep its weights modest. A large weight survives only if it genuinely earns its place.</p>
+    <div class="body center">
+      <div class="bigformula" style="font-size:40px;"><span class="b">total loss</span>&nbsp;=&nbsp;<span style="color:var(--ink);">error on the data</span>&nbsp;+&nbsp;<span class="r">penalty for large weights</span></div>
+      <div style="font-size:36px; color:var(--ink); text-align:center; margin-top:30px;">\[ L + \lambda \sum_i w_i^2 \]</div>
+      <p class="note" style="margin-top:30px;">The penalty term sums the squared weights, scaled by a strength <span style="font-style:normal;">\( \lambda \)</span>. Smaller weights yield a smoother, simpler decision surface, the kind that survives contact with new mail. This is also known as <strong>L2 regularization</strong>.</p>
+      <div class="in-practice"><span class="ip-tag">from the paper</span><p class="ip-text">Krogh &amp; Hertz (1992)<a class="cite" href="#/references">[3]</a> showed that <strong>a simple weight decay can improve generalization</strong> by suppressing weights that only fit noise. Decades on, it is still standard practice.</p></div>
+    </div>
+  </section>
+
+  <!-- 07 · EARLY STOPPING -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">Early stopping, halting at the best point</h2>
+    <p class="sub">The validation loss is monitored every epoch. The moment it stops improving and begins to climb, training halts and the best weights so far are kept.</p>
+    <div class="body center">
+      <div class="cols gap-lg" style="align-items:center;">
+        <p class="col col-text" style="font-size:32px;">This is the cheapest regularizer available: no extra layers, no penalty term, only a decision not to train past the point where the model begins to memorize. The validation curve marks exactly when that happens.</p>
+        <div class="col" style="flex:0 0 600px;">
+<pre class="code">stop = keras.callbacks.<span class="fn">EarlyStopping</span>(
+    monitor=<span class="s">"val_loss"</span>,
+    patience=<span class="n">3</span>,                 <span class="c"># wait 3 epochs</span>
+    restore_best_weights=<span class="k">True</span>,
+)
+model.<span class="fn">fit</span>(..., callbacks=[stop])</pre>
+        </div>
+      </div>
+      <div class="in-practice"><span class="ip-tag">from the paper</span><p class="ip-text">Prechelt (1998)<a class="cite" href="#/references">[4]</a>, "Early Stopping, But When?", makes the case that halting at the validation minimum is a simple, reliable guard against overfitting.</p></div>
+    </div>
+  </section>
+
+  <!-- DIVIDER · PART 02 -->
+  <section class="divider" data-background-color="#ffffff">
+    <div class="eyebrow">Part 02 of 03</div>
+    <h2 class="divider-title">Smoother training</h2>
+    <p class="divider-sub">Scaling, normalization, and optimizers that reach the minimum faster.</p>
+  </section>
+
+  <!-- 08 · FEATURE SCALING -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">Placing features on the same scale</h2>
+    <p class="sub">Some features are small, such as 0 to 2 links. Others are large, such as 0 to 500 words. Left unscaled, the large numbers dominate the small ones and training slows.</p>
+    <div class="body center">
+      <div class="cols gap-lg" style="align-items:center;">
+        <p class="col col-text" style="font-size:32px;">The analogue is comparing prices in different currencies. Converting them all to a <strong>common currency first</strong> makes the comparison fair.<br><br>After scaling, every feature carries equal weight, and the network learns more evenly and considerably faster.</p>
+        <div class="col" style="flex:0 0 640px;">
+<pre class="code"><span class="k">from</span> sklearn.preprocessing <span class="k">import</span> StandardScaler
+
+X = <span class="fn">StandardScaler</span>().<span class="fn">fit_transform</span>(X)
+<span class="c"># now every feature is comparable</span></pre>
+          <p class="note" style="margin-top:24px;">Standardization subtracts the mean and divides by the spread, so each feature is centered at zero with a comparable range.</p>
+          <div style="font-size:36px; color:var(--ink); text-align:center; margin-top:18px;">\[ \hat{x} = \dfrac{x - \mu}{\sigma} \]</div>
+        </div>
+      </div>
+      <div class="in-practice"><span class="ip-tag">in practice</span><p class="ip-text">The scaler is fit on <strong>training data only</strong>, then applied to validation and test. Fitting on everything leaks information from the exam into the study set.</p></div>
+    </div>
+  </section>
+
+  <!-- 09 · BATCH NORM -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">Normalization inside the network</h2>
+    <p class="sub">Scaling fixes the inputs once. Deeper in the network, each layer's numbers drift as training alters the layers before it. Normalization layers re-center those numbers during training.</p>
+    <div class="body center">
+      <div class="cards">
+        <div class="card"><div class="card-title" style="margin:0;">Batch normalization</div><div class="card-note">re-centers each layer's outputs across the batch. Trains faster and tolerates larger learning rates.</div></div>
+        <div class="card"><div class="card-title" style="margin:0;">Layer normalization</div><div class="card-note">normalizes across each single example rather than the batch. The variant used by transformers and LLMs.</div></div>
+      </div>
+      <div class="in-practice"><span class="ip-tag">from the paper</span><p class="ip-text">Ioffe &amp; Szegedy (2015)<a class="cite" href="#/references">[5]</a>: they "refer to this phenomenon as <strong>internal covariate shift</strong>, and address the problem by normalizing layer inputs."</p></div>
+    </div>
+  </section>
+
+  <!-- 10 · OPTIMIZERS -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">From plain steps to Adam</h2>
+    <p class="sub">Gradient descent steps downhill. Three refinements make those steps smarter, and the last is almost always the default choice.</p>
+    <div class="body center">
+      <div class="flow mid">
+        <div class="step-card"><div class="step-eyebrow">SGD</div><div class="step-name">Plain steps</div><div class="step-note">one fixed step size for every weight</div></div>
+        <div class="flow-arrow">→</div>
+        <div class="step-card"><div class="step-eyebrow">+ momentum</div><div class="step-name">Build speed</div><div class="step-note">recent steps are remembered, rolling past small bumps</div></div>
+        <div class="flow-arrow">→</div>
+        <div class="step-card dark"><div class="step-eyebrow dim">Adam</div><div class="step-name">Per weight steps</div><div class="step-note">each weight adapts its own step size</div></div>
+      </div>
+      <div class="in-practice"><span class="ip-tag">from the paper</span><p class="ip-text">Adam (Kingma &amp; Ba, 2015)<a class="cite" href="#/references">[6]</a>: optimization "based on <strong>adaptive estimates of lower-order moments</strong>," the running mean and variance of the gradient. It is the sensible default; tuned SGD is reserved for cases that call for it.</p></div>
+    </div>
+  </section>
+
+  <!-- 11 · INIT & SCHEDULES -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">Where training starts, and slowing down</h2>
+    <div class="body center">
+      <div class="cols gap-lg">
+        <div class="col">
+          <div class="col-head">Careful initialization</div>
+          <p class="col-text" style="font-size:32px;">Weights begin as random numbers, but the <strong>spread</strong> of those values matters. A poor choice causes signals to vanish or explode as they pass through layers. Good schemes set the spread from each layer's size so the signal stays healthy all the way through.</p>
+        </div>
+        <div class="col-rule"></div>
+        <div class="col">
+          <div class="col-head accent">Learning rate schedules</div>
+          <p class="col-text" style="font-size:32px;">Large steps early cover ground, then the <strong>step size shrinks</strong> near the minimum so the model settles rather than oscillates. A warmup followed by decay is the common shape.</p>
+        </div>
+      </div>
+      <div class="in-practice"><span class="ip-tag">from the paper</span><p class="ip-text">Glorot &amp; Bengio (2010)<a class="cite" href="#/references">[7]</a> and He et al. (2015)<a class="cite" href="#/references">[8]</a> derived the initialization spreads, He's tuned for ReLU, that make very deep networks trainable at all.</p></div>
+    </div>
+  </section>
+
+  <!-- DIVIDER · PART 03 -->
+  <section class="divider" data-background-color="#ffffff">
+    <div class="eyebrow">Part 03 of 03</div>
+    <h2 class="divider-title">Imbalanced security data</h2>
+    <p class="divider-sub">When the target class is rare, and the costs of the two errors are uneven.</p>
+  </section>
+
+  <!-- 12 · WHY ACCURACY LIES -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">Why accuracy misleads</h2>
+    <p class="sub">Phishing might be 1 in 100 emails. A model that marks <em>every</em> email safe is then 99% accurate and catches nothing. This is the defining shape of security data.</p>
+    <div class="body center">
+      <div class="cols gap-lg" style="align-items:center;">
+        <div class="col" style="flex:0 0 420px;">
+          <div class="imbal"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span class="bad"></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+          <p class="note" style="margin-top:24px;">100 emails, one is phishing. A filter that flags none is still 99% accurate.</p>
+        </div>
+        <div class="col" style="display:flex; flex-direction:column; gap:20px;">
+          <div class="card tint-red"><div style="font:600 34px var(--sans); color:var(--red);">False negative</div><p style="font:400 27px/1.45 var(--sans); color:var(--body); margin:10px 0 0;">phishing reaches the inbox, and the user clicks the link</p></div>
+          <div class="card tint-blue"><div style="font:600 34px var(--sans); color:var(--accent);">False positive</div><p style="font:400 27px/1.45 var(--sans); color:var(--body); margin:10px 0 0;">real mail is quarantined, a missed invoice or offer</p></div>
+          <p class="lead" style="font-size:30px; margin:6px 0 0;">The relevant measures are <strong>recall</strong> (of all phishing, the fraction caught) and <strong>precision</strong> (of what was flagged, the fraction genuine), never raw accuracy.</p>
+          <div style="font-size:28px; color:var(--ink); text-align:center; margin-top:8px;">\[ \text{recall} = \dfrac{\text{caught}}{\text{all phishing}} \qquad \text{precision} = \dfrac{\text{genuine}}{\text{all flagged}} \]</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 13 · FIXING IMBALANCE -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">Directing a model toward the rare class</h2>
+    <p class="sub">Three training time levers shift the network's attention toward the rare phishing examples.</p>
+    <div class="body center">
+      <div class="cards">
+        <div class="card"><div class="card-title" style="margin:0;">Class weights</div><div class="card-note">make each phishing error count for more in the loss. One line: <span class="code-inline">class_weight={0:1, 1:20}</span>.</div></div>
+        <div class="card"><div class="card-title" style="margin:0;">Resampling</div><div class="card-note">present more phishing (oversample) or less safe mail (undersample) so batches are less skewed.</div></div>
+        <div class="card"><div class="card-title" style="margin:0;">Focal loss</div><div class="card-note">automatically concentrates training on the hard, rare cases the model repeatedly misclassifies.</div></div>
+      </div>
+      <div class="code-row" style="margin-top:30px;">
+<pre class="code" style="flex:1.3; font-size:25px;">model.<span class="fn">fit</span>(X_train, y_train,
+          class_weight={<span class="n">0</span>: <span class="n">1</span>, <span class="n">1</span>: <span class="n">20</span>})   <span class="c"># each phishing error counts 20x</span></pre>
+        <div class="code-annot">
+          <div><div class="step-eyebrow">class_weight</div><p>the one-line lever: the loss treats every missed phishing email as twenty ordinary errors.</p></div>
+        </div>
+      </div>
+      <div class="in-practice"><span class="ip-tag">from the paper</span><p class="ip-text">SMOTE (Chawla et al., 2002)<a class="cite" href="#/references">[9]</a> over-samples "by creating <strong>synthetic minority class examples</strong>" between near neighbors; focal loss (Lin et al., 2017)<a class="cite" href="#/references">[10]</a> reshapes cross-entropy so it "<strong>down-weights the loss assigned to well-classified examples</strong>."</p></div>
+    </div>
+  </section>
+
+  <!-- 14 · THE THRESHOLD -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">The cutoff is a security decision</h2>
+    <p class="sub">The model outputs a 0 to 1 score. The default 0.5 cutoff is a dial: lowering it catches more attacks at the cost of more false alarms, while raising it does the reverse.</p>
+    <div class="body">
+      <div style="height:360px; margin-top:16px;"><threshold-sweep></threshold-sweep></div>
+      <p class="note" style="margin-top:14px;">For a bank's fraud filter a missed attack is catastrophic, so the cutoff is lowered and the false alarms are accepted. The right setting is a business and risk judgment, not a default.</p>
+      <div class="in-practice sec"><span class="ip-tag">security</span><p class="ip-text">The threshold is chosen against the <strong>cost</strong> of each error, not to maximize accuracy. It is revisited as attack rates shift; a fixed cutoff silently degrades as the base rate moves.</p></div>
+    </div>
+  </section>
+
+  <!-- 15 · GLOSSARY -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">Key terms, in plain words</h2>
+    <div class="body center">
+      <div class="cols gap-lg">
+        <div class="col" style="display:flex; flex-direction:column; gap:24px;">
+          <div><div style="font:600 30px var(--sans); color:var(--accent);">Overfitting</div><p class="col-text" style="font-size:27px; margin-top:6px;">memorizing the training data instead of the pattern.</p></div>
+          <div><div style="font:600 30px var(--sans); color:var(--accent);">Dropout</div><p class="col-text" style="font-size:27px; margin-top:6px;">switching off neurons at random during training for robustness.</p></div>
+          <div><div style="font:600 30px var(--sans); color:var(--accent);">Weight decay</div><p class="col-text" style="font-size:27px; margin-top:6px;">a penalty that keeps weights small and the model simple.</p></div>
+          <div><div style="font:600 30px var(--sans); color:var(--accent);">Batch / layer norm</div><p class="col-text" style="font-size:27px; margin-top:6px;">re-centering a layer's numbers to keep training stable.</p></div>
+        </div>
+        <div class="col-rule"></div>
+        <div class="col" style="display:flex; flex-direction:column; gap:24px;">
+          <div><div style="font:600 30px var(--sans); color:var(--accent);">Class imbalance</div><p class="col-text" style="font-size:27px; margin-top:6px;">when one label (phishing) is far rarer than the other.</p></div>
+          <div><div style="font:600 30px var(--sans); color:var(--accent);">Class weights</div><p class="col-text" style="font-size:27px; margin-top:6px;">making the rare class count for more in the loss.</p></div>
+          <div><div style="font:600 30px var(--sans); color:var(--accent);">Focal loss</div><p class="col-text" style="font-size:27px; margin-top:6px;">a loss that concentrates training on the hard, rare cases.</p></div>
+          <div><div style="font:600 30px var(--sans); color:var(--accent);">Threshold</div><p class="col-text" style="font-size:27px; margin-top:6px;">the score cutoff for labeling phishing, a cost decision.</p></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 16 · RECAP -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">The big picture in four ideas</h2>
+    <div class="body center">
+      <ol class="agenda">
+        <li>A model that trains is not yet a model that <strong>works</strong>.</li>
+        <li><strong>Regularization</strong> (dropout, weight decay, early stopping) prevents memorizing.</li>
+        <li><strong>Scaling, normalization, and Adam</strong> make training smooth and fast.</li>
+        <li>Security data is <strong>imbalanced</strong>, so the rare class is weighted and the threshold is set by cost.</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- 17 · REFERENCES -->
+  <section id="references" data-background-color="#ffffff">
+    <h2 class="slide-title">References and where to go deeper</h2>
+    <div class="body center">
+      <div class="refs">
+        <div class="ref-col">
+          <div class="ref-group">
+            <div class="ref"><span class="ref-n">[1]</span>TensorFlow / Keras; scikit-learn, imbalanced-learn <span class="src">(<a href="https://jmlr.org/papers/v12/pedregosa11a.html" target="_blank" rel="noopener">Pedregosa et al., 2011, JMLR</a>).</span></div>
+            <div class="ref"><span class="ref-n">[2]</span>Srivastava et al. (2014). Dropout: a simple way to prevent neural networks from overfitting. <span class="src"><a href="https://jmlr.org/papers/v15/srivastava14a.html" target="_blank" rel="noopener">JMLR 15.</a></span></div>
+            <div class="ref"><span class="ref-n">[3]</span>Krogh &amp; Hertz (1992). A simple weight decay can improve generalization. <span class="src"><a href="https://papers.nips.cc/paper/563-a-simple-weight-decay-can-improve-generalization" target="_blank" rel="noopener">NeurIPS.</a></span></div>
+            <div class="ref"><span class="ref-n">[4]</span>Prechelt (1998). Early stopping, but when? <span class="src"><a href="https://doi.org/10.1007/3-540-49430-8_3" target="_blank" rel="noopener">Neural Networks: Tricks of the Trade.</a></span></div>
+            <div class="ref"><span class="ref-n">[5]</span>Ioffe &amp; Szegedy (2015). Batch normalization. <span class="src"><a href="https://proceedings.mlr.press/v37/ioffe15.html" target="_blank" rel="noopener">ICML.</a></span></div>
+            <div class="ref"><span class="ref-n">[6]</span>Kingma &amp; Ba (2015). Adam: a method for stochastic optimization. <span class="src"><a href="https://doi.org/10.48550/arXiv.1412.6980" target="_blank" rel="noopener">ICLR.</a></span></div>
+          </div>
+        </div>
+        <div class="ref-col">
+          <div class="ref-group">
+            <div class="ref"><span class="ref-n">[7]</span>Glorot &amp; Bengio (2010). Understanding the difficulty of training deep feedforward networks. <span class="src"><a href="https://proceedings.mlr.press/v9/glorot10a.html" target="_blank" rel="noopener">AISTATS.</a></span></div>
+            <div class="ref"><span class="ref-n">[8]</span>He, Zhang, Ren &amp; Sun (2015). Delving deep into rectifiers. <span class="src"><a href="https://doi.org/10.1109/ICCV.2015.123" target="_blank" rel="noopener">ICCV.</a></span></div>
+            <div class="ref"><span class="ref-n">[9]</span>Chawla et al. (2002). SMOTE: synthetic minority over-sampling technique. <span class="src"><a href="https://doi.org/10.1613/jair.953" target="_blank" rel="noopener">JAIR 16.</a></span></div>
+            <div class="ref"><span class="ref-n">[10]</span>Lin, Goyal, Girshick, He &amp; Dollár (2017). Focal loss for dense object detection. <span class="src"><a href="https://doi.org/10.1109/ICCV.2017.324" target="_blank" rel="noopener">ICCV.</a></span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+</div>
+
+<script src="../assets/reveal/reveal.js"></script>
+<script src="../assets/version.js"></script>
+<script src="../assets/deck-chrome.js"></script>
+<script src="../assets/visuals/plots.js"></script>
+<script src="../assets/visuals/dropout-net.js"></script>
+<script src="../assets/visuals/threshold-sweep.js"></script>
+<script src="../assets/katex/katex.min.js"></script>
+<script src="../assets/katex/auto-render.min.js"></script>
+<script>
+  // Typeset LaTeX in \( \) (inline) and \[ \] (display) across all slides.
+  renderMathInElement(document.body, {
+    delimiters: [
+      { left: '\\[', right: '\\]', display: true },
+      { left: '\\(', right: '\\)', display: false },
+    ],
+    throwOnError: false,
+  });
+  Reveal.initialize({
+    width: 1920,
+    height: 1080,
+    margin: 0,
+    center: false,
+    hash: true,
+    history: true,
+    transition: 'fade',
+    plugins: [],
+  });
+  Reveal.on('slidechanged', (e) => {
+    if (window.__drawPlots) window.__drawPlots();
+    e.currentSlide.querySelectorAll('dropout-net, threshold-sweep').forEach((v) => {
+      const btn = v.shadowRoot && v.shadowRoot.querySelector('#replay');
+      if (btn) btn.click();
+    });
+  });
+</script>
+</body>
+</html>
