@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.0 - 2026-06-25
+
+### Added
+
+- Add the text embeddings deck covering tokenization, word2vec, and contextual embeddings
+
 ## 0.3.0 - 2026-06-22
 
 ### Added

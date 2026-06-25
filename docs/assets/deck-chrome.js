@@ -20,7 +20,8 @@
   var DECKS = [
     { n: '01', slug: 'neural-networks',                title: 'Neural Networks',                    built: true  },
     { n: '02', slug: 'how-neural-networks-learn',      title: 'How Neural Networks Learn',          built: true  },
-    { n: '03', slug: 'training-deep-networks',         title: 'Training Deep Networks',             built: true  }
+    { n: '03', slug: 'training-deep-networks',         title: 'Training Deep Networks',             built: true  },
+    { n: '04', slug: 'text-embeddings',                title: 'Text Embeddings',                    built: true  }
   ];
 
   // Current deck slug from the URL (…/docs/<slug>/…).
