@@ -2,14 +2,16 @@
 
 Learn the fundamentals of deep learning for cybersecurity, and build models that tackle real problems like phishing, malware, and intrusion detection. Intuition first, for professionals and academics.
 
+**[View the live decks](https://laplacef.github.io/deep-learning-for-cyber/)**
+
 ## Topics
 
 | Topic | Description |
 |------|-------|
-| [Neural Networks](docs/neural-networks/) | The neuron, activations, and how a network turns features into a prediction |
-| [How Neural Networks Learn](docs/how-neural-networks-learn/) | How loss, gradient descent, and backprop let a network learn from its mistakes |
-| [Training Deep Networks](docs/training-deep-networks/) | Regularization, optimization, and the class imbalance that defines security data |
-| [Text Embeddings](docs/text-embeddings/) | Turning words into vectors so meaning becomes distance, and why that catches reworded phishing |
+| [Neural Networks](https://laplacef.github.io/deep-learning-for-cyber/neural-networks/) | The neuron, activations, and how a network turns features into a prediction |
+| [How Neural Networks Learn](https://laplacef.github.io/deep-learning-for-cyber/how-neural-networks-learn/) | How loss, gradient descent, and backprop let a network learn from its mistakes |
+| [Training Deep Networks](https://laplacef.github.io/deep-learning-for-cyber/training-deep-networks/) | Regularization, optimization, and the class imbalance that defines security data |
+| [Text Embeddings](https://laplacef.github.io/deep-learning-for-cyber/text-embeddings/) | Turning words into vectors so meaning becomes distance, and why that catches reworded phishing |
 
 ## License
 
