@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.2 - 2026-06-26
+
+### Removed
+
+- Remove the deck-menu license notice; the license remains on the landing page
+
 ## 0.4.1 - 2026-06-26
 
 ### Added
