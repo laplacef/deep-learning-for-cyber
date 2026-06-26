@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.4.1 - 2026-06-26
+
+### Added
+
+- Add a repository link to the landing page footer
+- Add a license notice to the deck navigation menu
+
 ## 0.4.0 - 2026-06-25
 
 ### Added
