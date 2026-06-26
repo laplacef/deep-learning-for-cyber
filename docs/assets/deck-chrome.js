@@ -75,7 +75,11 @@
       '#deck-chrome .dc-row.planned .dc-title{color:var(--muted2,#9da0b0);}',
       '#deck-chrome .dc-row.active{background:var(--tint-blue,#eef1fc);}',
       '#deck-chrome .dc-row.active .dc-title{color:var(--accent,#3b56d8);font-weight:600;}',
-      '#deck-chrome .dc-row.active .dc-num{color:var(--accent,#3b56d8);}'
+      '#deck-chrome .dc-row.active .dc-num{color:var(--accent,#3b56d8);}',
+      '#deck-chrome .dc-foot{margin-top:auto;padding:16px 30px 2px;font:500 12px/1.5 var(--mono,monospace);color:var(--muted2,#9da0b0);border-top:1px solid var(--line,#dededf);}',
+      '#deck-chrome .dc-foot-name{color:var(--muted,#6b6f80);}',
+      '#deck-chrome .dc-foot a{color:var(--muted2,#9da0b0);text-decoration:none;}',
+      '#deck-chrome .dc-foot a:hover{color:var(--accent,#3b56d8);}'
     ].join('');
     document.head.appendChild(style);
 
@@ -111,6 +115,7 @@
           '</div>' +
         '</div>' +
         '<ul class="dc-list">' + rows + '</ul>' +
+        '<div class="dc-foot">&copy; 2026 <span class="dc-foot-name">Francisco Laplace</span> &middot; <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" target="_blank" rel="noopener">CC BY-NC-SA 4.0</a></div>' +
       '</nav>';
 
     document.body.appendChild(root);
