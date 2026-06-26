@@ -1,8 +1,8 @@
 # Deep Learning for Cyber
 
-Learn the fundamentals of deep learning for cybersecurity, and build models that tackle real problems like phishing, malware, and intrusion detection. Intuition first, for professionals and academics.
+[![Version](https://img.shields.io/badge/version-0.4.0-3b56d8)](CHANGELOG.md)
 
-**[View the live decks](https://laplacef.github.io/deep-learning-for-cyber/)**
+Learn the fundamentals of deep learning for cybersecurity, and build models that tackle real problems like phishing, malware, and intrusion detection. Intuition first, for professionals and academics.
 
 ## Topics
 
