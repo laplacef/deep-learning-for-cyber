@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.3 - 2026-06-27
+
+### Added
+
+- Add a Creative Commons license notice to each deck's references slide
+
 ## 0.4.2 - 2026-06-26
 
 ### Removed
