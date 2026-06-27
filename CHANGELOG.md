@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.5.0 - 2026-06-27
+
+### Added
+
+- Add the malware as images deck covering convolution, pooling, and transfer learning
+
 ## 0.4.3 - 2026-06-27
 
 ### Added
