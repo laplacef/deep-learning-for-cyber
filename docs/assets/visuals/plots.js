@@ -69,12 +69,17 @@
       const px = lerp(x0, x1, (bx - (-3)) / 6);
       const py = lerp(y0, y1, (by - (-0.4)) / (9 - (-0.4)));
       ctx.fillStyle = RED; ctx.beginPath(); ctx.arc(px, py, 11, 0, 7); ctx.fill();
-      ctx.strokeStyle = INK; ctx.lineWidth = 3; ctx.beginPath();
-      ctx.moveTo(px - 6, py + 26); ctx.lineTo(px - 40, py + 50); ctx.stroke();
-      ctx.beginPath(); ctx.moveTo(px - 40, py + 50); ctx.lineTo(px - 30, py + 44);
-      ctx.moveTo(px - 40, py + 50); ctx.lineTo(px - 34, py + 38); ctx.stroke();
+      const ax0 = px - 4, ay0 = py + 20, ax1 = px - 44, ay1 = py + 58;
+      ctx.strokeStyle = INK; ctx.lineWidth = 3; ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+      ctx.beginPath(); ctx.moveTo(ax0, ay0); ctx.lineTo(ax1, ay1); ctx.stroke();
+      const ang = Math.atan2(ay1 - ay0, ax1 - ax0), hl = 13, ha = 0.42;
+      ctx.beginPath();
+      ctx.moveTo(ax1, ay1); ctx.lineTo(ax1 - hl * Math.cos(ang - ha), ay1 - hl * Math.sin(ang - ha));
+      ctx.moveTo(ax1, ay1); ctx.lineTo(ax1 - hl * Math.cos(ang + ha), ay1 - hl * Math.sin(ang + ha));
+      ctx.stroke();
+      ctx.lineCap = 'butt'; ctx.lineJoin = 'miter';
       ctx.fillStyle = MUT; ctx.font = "500 17px 'IBM Plex Mono', monospace";
-      ctx.fillText('downhill', px - 96, py + 70);
+      ctx.fillText('downhill', px - 60, py + 80);
     } else if (type === 'squeeze') {
       const midY = lerp(y0, y1, 0.5);
       axes(midY);

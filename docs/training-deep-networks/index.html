@@ -154,8 +154,7 @@ model.<span class="fn">fit</span>(..., callbacks=[stop])</pre>
         <div class="col" style="flex:0 0 640px;">
 <pre class="code"><span class="k">from</span> sklearn.preprocessing <span class="k">import</span> StandardScaler
 
-X = <span class="fn">StandardScaler</span>().<span class="fn">fit_transform</span>(X)
-<span class="c"># now every feature is comparable</span></pre>
+X = <span class="fn">StandardScaler</span>().<span class="fn">fit_transform</span>(X)</pre>
           <p class="note" style="margin-top:24px;">Standardization subtracts the mean and divides by the spread, so each feature is centered at zero with a comparable range.</p>
           <div style="font-size:36px; color:var(--ink); text-align:center; margin-top:18px;">\[ \hat{x} = \dfrac{x - \mu}{\sigma} \]</div>
         </div>
@@ -273,7 +272,7 @@ X = <span class="fn">StandardScaler</span>().<span class="fn">fit_transform</spa
 
   <!-- 15 · GLOSSARY -->
   <section data-background-color="#ffffff">
-    <h2 class="slide-title">Key terms, in plain words</h2>
+    <h2 class="slide-title">Key terms</h2>
     <div class="body center">
       <div class="cols gap-lg">
         <div class="col" style="display:flex; flex-direction:column; gap:24px;">
@@ -295,7 +294,7 @@ X = <span class="fn">StandardScaler</span>().<span class="fn">fit_transform</spa
 
   <!-- 16 · RECAP -->
   <section data-background-color="#ffffff">
-    <h2 class="slide-title">The big picture in four ideas</h2>
+    <h2 class="slide-title">The core ideas</h2>
     <div class="body center">
       <ol class="agenda">
         <li>A model that trains is not yet a model that <strong>works</strong>.</li>

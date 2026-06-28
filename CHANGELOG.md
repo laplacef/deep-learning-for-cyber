@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.5.1 - 2026-06-28
+
+### Changed
+
+- Standardize the glossary and recap slide titles to "Key terms" and "The core ideas"
+- Shorten divider subtitles so none wrap to a single-word line
+
+### Fixed
+
+- Render the gradient-descent plot arrow along the slope, clear of the curve and label
+- Render the author name in bold on the text embeddings cover
+
 ## 0.5.0 - 2026-06-27
 
 ### Added

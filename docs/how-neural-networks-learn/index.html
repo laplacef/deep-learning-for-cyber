@@ -61,8 +61,9 @@
         <div class="col panel dark">
           <div class="panel-label">For the curious</div>
           <p>One common scoring rule: when an email is genuinely phishing, the penalty is small if the predicted score was close to 1, and grows quickly as the score drops toward 0.</p>
-          <p class="dim" style="font-size:24px; margin-top:24px;">This rule is named cross entropy, and it is fundamentally a measure of surprise. A confident, correct prediction is barely surprised and pays almost nothing. A confident, wrong prediction is heavily surprised and pays a great deal. Binary denotes two classes, the partner to the sigmoid score.</p>
-          <p class="dim" style="font-size:24px; margin-top:18px;">With true label <span style="white-space:nowrap;">\( y \)</span> in <span style="white-space:nowrap;">\( \{0, 1\} \)</span> and predicted score <span style="white-space:nowrap;">\( p \)</span>, it reads <span style="color:var(--bg);">\( \text{loss} = -[\, y \log p + (1 - y) \log(1 - p) \,] \)</span>.</p>
+          <p class="dim" style="font-size:24px; margin-top:24px;">This rule is named cross entropy, a measure of surprise. A confident, correct prediction is barely surprised and pays almost nothing; a confident, wrong one is heavily surprised and pays a great deal.</p>
+          <p class="dim" style="font-size:24px; margin-top:18px;">With true label <span style="white-space:nowrap;">\( y \)</span> in <span style="white-space:nowrap;">\( \{0, 1\} \)</span> and predicted score <span style="white-space:nowrap;">\( p \)</span>:</p>
+          <div style="text-align:center; color:var(--bg); font-size:28px; margin-top:14px;">\[ \text{loss} = -\left[\, y \log p + (1 - y) \log(1 - p) \,\right] \]</div>
         </div>
       </div>
     </div>
@@ -295,7 +296,7 @@ score = model.<span class="fn">predict</span>([x])[<span class="n">0</span>][<sp
 
   <!-- 17 · GLOSSARY -->
   <section data-background-color="#ffffff">
-    <h2 class="slide-title">Key terms, in plain words</h2>
+    <h2 class="slide-title">Key terms</h2>
     <div class="body center">
       <div class="cols gap-lg">
         <div class="col" style="display:flex; flex-direction:column; gap:26px;">
@@ -315,7 +316,7 @@ score = model.<span class="fn">predict</span>([x])[<span class="n">0</span>][<sp
 
   <!-- 18 · RECAP -->
   <section data-background-color="#ffffff">
-    <h2 class="slide-title">The four core ideas</h2>
+    <h2 class="slide-title">The core ideas</h2>
     <div class="body center">
       <ol class="agenda">
         <li>The <strong>loss</strong> measures how wrong a prediction is.</li>
