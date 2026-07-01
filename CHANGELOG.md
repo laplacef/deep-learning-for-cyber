@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.5.2 - 2026-06-30
+
+### Added
+
+- Add a "Beyond malware images" applications gallery to the malware as images deck: visual phishing detection, steganalysis, and image poisoning
+- Add three "Think it through" discussion slides to the malware as images deck
+- Add a scanning-filter animation to the malware deck's convolution build-up
+
+### Changed
+
+- Rework the malware deck's convolution explanation into a step-by-step build with a back-to-front feature-map stack
+
 ## 0.5.1 - 2026-06-28
 
 ### Changed
