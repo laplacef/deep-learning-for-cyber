@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.6.0 - 2026-07-08
+
+### Added
+
+- Add the Sequences & Recurrence deck: recurrent networks and LSTMs reading logs and event streams one step at a time, carrying a memory across long sessions
+- Add five "Think it through" discussion beats, a six-application security gallery, and a defense-in-depth capstone to the deck
+
 ## 0.5.2 - 2026-06-30
 
 ### Added
