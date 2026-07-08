@@ -22,7 +22,8 @@
     { n: '02', slug: 'how-neural-networks-learn',      title: 'How Neural Networks Learn',          built: true  },
     { n: '03', slug: 'training-deep-networks',         title: 'Training Deep Networks',             built: true  },
     { n: '04', slug: 'text-embeddings',                title: 'Text Embeddings',                    built: true  },
-    { n: '05', slug: 'malware-as-images',              title: 'Malware as Images',                  built: true  }
+    { n: '05', slug: 'malware-as-images',              title: 'Malware as Images',                  built: true  },
+    { n: '06', slug: 'sequences-recurrence',           title: 'Sequences & Recurrence',             built: true  }
   ];
 
   // Current deck slug from the URL (…/docs/<slug>/…).
