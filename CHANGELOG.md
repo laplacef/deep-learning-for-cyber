@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.6.1 - 2026-07-08
+
+### Added
+
+- Add a "Think it through" prediction beat to each of the first three decks: predict the verdict, predict the two curves, and set the cutoff
+- Add steganalysis and data poisoning to the malware deck's key terms, and a fifth recap point
+- Add the training math to the Sequences & Recurrence deck: backpropagation through time, the vanishing and exploding factors, and the cell state update, with plain-language symbol keys
+- Add an animated unroll to the Sequences & Recurrence deck, showing one cell reused across the sequence
+
+### Changed
+
+- Revise slide titles and agenda wording across the decks toward a more direct, sentence-first style
+- Strengthen external link attributes across all decks and the landing page
+- Improve paragraph wrapping so prose no longer ends on single-word lines
+- Redesign the malware deck's patch-scoring and output-size slides for a clearer, math-forward read
+- Simplify the malware deck's applied-gallery slides to lead with the visuals
+- Present the deck equations in running textbook prose with plain-language symbol keys
+- Rework the text embeddings deck's training step into a worked softmax derivation, and tighten its wording
+- Stabilize subtitle rendering by preloading fonts and balancing subtitle line breaks
+
 ## 0.6.0 - 2026-07-08
 
 ### Added
