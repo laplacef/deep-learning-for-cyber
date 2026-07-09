@@ -12,41 +12,21 @@
 <style>
   /* Reader-text normalization: one body size across slides. */
   .reveal .col-text { font-size: 32px; }
+  /* Equation legends: a running-prose "where" clause under a display formula. */
+  .reveal .eqprose { font: 400 25px/1.55 var(--sans); color: var(--body); max-width: 1040px; margin: 16px auto 0; text-align: left; }
   /* Prevent single-word orphan lines in wrapping prose. */
   .reveal .cover-sub, .reveal .sub, .reveal .divider-sub, .reveal .lead,
   .reveal .col-text, .reveal .card-note, .reveal .card p, .reveal .note,
   .reveal .ip-text, .reveal .code-annot p { text-wrap: pretty; }
 </style>
 <style>
-  /* deck-local one-offs: the unrolled RNN chain and the attention heat row */
-  .cell { width: 118px; height: 92px; border-radius: 12px; background: var(--bg-alt); border: 0;
-          display: flex; align-items: center; justify-content: center; font: 600 30px var(--mono); color: var(--ink); }
-  .cell.dark { background: var(--ink); color: #fff; border: 0; }
-  .seqtok { font: 500 24px var(--mono); color: var(--muted); text-align: center; margin: 0; }
-  .seqts { font: 500 24px var(--mono); color: var(--muted); text-align: center; margin: 0; }
-  /* unrolled-RNN grid: timestamps / boxes+arrows / labels in aligned rows */
-  .rnn-grid { display: grid; grid-template-columns: repeat(3, 200px 56px) 200px; justify-content: center; justify-items: center; align-items: center; row-gap: 12px; }
-  .rnn-grid .flow-arrow { justify-content: center; }
-  .att-row { display: flex; align-items: flex-end; gap: 18px; justify-content: center; }
-  .att-col { display: flex; flex-direction: column; align-items: center; width: 210px; }
-  .att-bar { width: 60px; border-radius: 7px 7px 0 0; background: var(--accent); }
-  .att-tok { margin-top: 14px; background: var(--bg-alt); border: 0; border-radius: 9px;
-             padding: 12px 0; width: 100%; text-align: center; font: 500 25px var(--mono); color: var(--ink); }
-  .att-tok.hot { background: var(--tint-red); color: var(--red); }
   /* timestamped log excerpt */
   .logview { background: var(--bg-alt); border-radius: 12px; padding: 24px 28px; display: flex; flex-direction: column; gap: 4px; width: 100%; }
-  .mini-log { display: flex; flex-direction: column; gap: 4px; }
   .logrow { display: flex; gap: 24px; align-items: baseline; font: 500 25px/1.5 var(--mono); color: var(--ink); padding: 8px 8px; border-radius: 7px; }
   .logts { color: var(--muted); white-space: nowrap; }
   .logmsg { color: var(--ink); }
   .logrow.bad { background: var(--tint-red); }
   .logrow.bad .logts, .logrow.bad .logmsg { color: var(--red); font-weight: 600; }
-  /* worked attention example table */
-  .attn-tbl { border-collapse: collapse; margin: 0 auto; font-family: var(--sans); color: var(--ink); }
-  .attn-tbl th, .attn-tbl td { padding: 12px 30px; font-size: 28px; text-align: center; border-bottom: 1px solid var(--line); }
-  .attn-tbl thead th { font-size: 24px; font-weight: 600; color: var(--muted); border-bottom: 2px solid var(--line-2); }
-  .attn-tbl td.lead-col { text-align: left; font-weight: 500; font-family: var(--mono); }
-  .attn-tbl tbody tr.hot td { background: var(--tint-blue); color: var(--accent); font-weight: 600; }
   /* predictive-text autocomplete mockup */
   .ac-box { background: var(--bg-alt); border-radius: 14px; padding: 30px 32px; }
   .ac-suggest { display: flex; gap: 14px; margin-bottom: 18px; }
@@ -72,7 +52,7 @@
       <h1 class="cover-title">Sequences<br>&amp; Recurrence</h1>
       <p class="cover-sub">How recurrent networks read logs and event streams one line at a time, carry a memory, and how the LSTM keeps that memory alive across a long session.</p>
     </div>
-    <div class="deck-footer">Deep Learning for Cyber&nbsp;&nbsp;·&nbsp;&nbsp;<a class="name" href="https://laplacef.me" target="_blank" rel="noopener">Francisco Laplace</a></div>
+    <div class="deck-footer">Deep Learning for Cyber&nbsp;&nbsp;·&nbsp;&nbsp;<a class="name" href="https://laplacef.me" target="_blank" rel="noopener noreferrer">Francisco Laplace</a></div>
   </section>
 
   <!-- 02 · AGENDA -->
@@ -81,9 +61,9 @@
     <div class="body center">
       <ol class="agenda">
         <li>Why order carries the meaning in a log or a session</li>
-        <li>The recurrent neuron, and reading with a memory</li>
-        <li>Why that memory fades, and how the LSTM holds on</li>
-        <li>Variants and shapes, and where recurrence runs in security</li>
+        <li>The recurrent neuron and reading with a memory</li>
+        <li>Why that memory fades and how the LSTM holds on</li>
+        <li>Variants, shapes, and where recurrence runs in security</li>
       </ol>
     </div>
   </section>
@@ -91,28 +71,26 @@
   <!-- WHAT IS A SEQUENCE -->
   <section data-background-color="#ffffff">
     <h2 class="slide-title">What makes data a sequence</h2>
-    <p class="sub">A sequence is an ordered list of items, where the position of each item is itself part of the information. Order is not decoration; it is data.</p>
+    <p class="sub">A sequence is an ordered list of items in which position is itself information.</p>
     <div class="body center">
       <div class="cols gap-lg">
         <div class="col card" style="padding:44px;">
-          <div class="card-eyebrow" style="color:var(--muted);">a bag</div>
-          <div class="card-title" style="margin:8px 0 0;">Order does not matter</div>
-          <p style="font:400 27px/1.5 var(--sans); color:var(--body); margin:14px 0 0;">a shopping list: milk, eggs, bread. Shuffle it and the groceries come out the same. Only the contents count.</p>
+          <div class="card-title" style="margin:0;">A shopping list is a bag</div>
+          <p style="font:400 27px/1.5 var(--sans); color:var(--body); margin:14px 0 0;">milk, eggs, bread. Shuffled, the groceries come out the same.</p>
         </div>
         <div class="col card tint-blue" style="padding:44px;">
-          <div class="card-eyebrow" style="color:var(--accent);">a sequence</div>
-          <div class="card-title" style="margin:8px 0 0; color:var(--accent);">Order is the message</div>
-          <p style="font:400 27px/1.5 var(--sans); color:var(--body); margin:14px 0 0;">a recipe: crack, whisk, then heat. Shuffle those steps and breakfast fails. The same steps in a new order mean something else.</p>
+          <div class="card-title" style="margin:0; color:var(--accent);">A recipe is a sequence</div>
+          <p style="font:400 27px/1.5 var(--sans); color:var(--body); margin:14px 0 0;">crack, whisk, then heat. Shuffled, breakfast fails.</p>
         </div>
       </div>
-      <p class="lead" style="font-size:32px; color:var(--ink); margin-top:44px;">Same items, different order, different outcome. A model that only counts what appeared sees the bag; <strong style="color:var(--accent);">a sequence model reads the order.</strong></p>
+      <p class="lead" style="font-size:32px; color:var(--ink); margin-top:44px;">A model that counts what appeared sees the bag; <strong style="color:var(--accent);">a sequence model reads the order.</strong></p>
     </div>
   </section>
 
   <!-- DATA AS SEQUENCES -->
   <section data-background-color="#ffffff">
     <h2 class="slide-title">So much data is already a sequence</h2>
-    <p class="sub">Once order counts as information, a wide range of security data reveals itself as a sequence, the same shape beneath different surfaces.</p>
+    <p class="sub">Once order counts as information, much of security data turns out to be a sequence.</p>
     <div class="body center">
       <div class="cards">
         <div class="card" style="padding:32px 26px;"><div class="card-title" style="margin:0;">Text and email</div><div class="card-note" style="margin-top:10px;">words, one after&nbsp;another.</div></div>
@@ -121,14 +99,13 @@
         <div class="card" style="padding:32px 26px;"><div class="card-title" style="margin:0;">System logs</div><div class="card-note" style="margin-top:10px;">events, in time order.</div></div>
         <div class="card" style="padding:32px 26px;"><div class="card-title" style="margin:0;">An executable</div><div class="card-note" style="margin-top:10px;">bytes, read front to back.</div></div>
       </div>
-      <p class="lead" style="font-size:32px; color:var(--ink); margin-top:44px;">Different surfaces, one underlying shape: <strong>items, in order.</strong> That is exactly what the models in this session are built to read.</p>
     </div>
   </section>
 
   <!-- 03 · THE PROBLEM -->
   <section data-background-color="#ffffff">
     <h2 class="slide-title">An attack unfolds as an ordered sequence</h2>
-    <p class="sub">A system log is not a bag of events. It is a <strong>sequence in time</strong>, and the order carries the meaning.</p>
+    <p class="sub">A system log is a <strong>sequence in time</strong>, and the order carries the meaning.</p>
     <div class="body center">
       <div class="cols gap-lg" style="align-items:center;">
         <div class="col logview">
@@ -137,7 +114,7 @@
           <div class="logrow"><span class="logts">08:15:03</span><span class="logmsg">sudo: admin opened root shell</span></div>
           <div class="logrow bad"><span class="logts">08:22:41</span><span class="logmsg">scp 2.1 GB to 185.62.40.9</span></div>
         </div>
-        <p class="col col-text" style="font-size:32px;">Each line alone is ordinary. Admins mistype passwords, sign in, escalate, and copy files every day. Read <strong>in order</strong>, they trace a clear progression: brute force a login, break in, escalate to root, and exfiltrate the data.<br><br>A model that only counts which log lines appeared would miss this entirely. The task requires a model that reads the <strong>order</strong>.</p>
+        <p class="col col-text" style="font-size:32px;">Each line alone is ordinary. Admins mistype passwords, sign in, escalate, and copy files every day. Read <strong>in order</strong>, they trace a clear progression: brute force a login, break in, escalate to root, and exfiltrate the data.<br><br>A model that only counts which lines appeared would miss the progression entirely.</p>
       </div>
     </div>
   </section>
@@ -146,34 +123,7 @@
   <section class="divider" data-background-color="#ffffff">
     <div class="eyebrow">Part 01 of 03</div>
     <h2 class="divider-title">Reading in order</h2>
-    <p class="divider-sub">Why a sequence needs a memory, not just a tally.</p>
-  </section>
-
-  <!-- 04 · WHY ORDER MATTERS -->
-  <section data-background-color="#ffffff">
-    <h2 class="slide-title">Same events, different meaning</h2>
-    <p class="sub">Order is not a detail; it reverses the meaning. The same events in a different sequence can read as routine or as an alarm.</p>
-    <div class="body center">
-      <div class="cols gap-lg">
-        <div class="col card tint-blue" style="padding:36px 40px;">
-          <div class="mini-log">
-            <div class="logrow"><span class="logts">08:00</span><span class="logmsg">login</span></div>
-            <div class="logrow"><span class="logts">08:02</span><span class="logmsg">read file</span></div>
-            <div class="logrow"><span class="logts">08:05</span><span class="logmsg">logout</span></div>
-          </div>
-          <p style="font:400 28px/1.5 var(--sans); color:var(--body); margin:18px 0 0;">an ordinary day at work.</p>
-        </div>
-        <div class="col card tint-red" style="padding:36px 40px;">
-          <div class="mini-log">
-            <div class="logrow"><span class="logts" style="color:var(--red);">08:00</span><span class="logmsg" style="color:var(--red); font-weight:600;">read file</span></div>
-            <div class="logrow"><span class="logts">08:02</span><span class="logmsg">login</span></div>
-            <div class="logrow"><span class="logts">08:05</span><span class="logmsg">logout</span></div>
-          </div>
-          <p style="font:400 28px/1.5 var(--sans); color:var(--body); margin:18px 0 0;">reading a file <em>before</em> a login should not be possible.</p>
-        </div>
-      </div>
-      <p class="lead" style="font-size:32px; color:var(--ink); margin-top:46px;">Identical events, opposite meaning. <strong style="color:var(--accent);">The order is the signal.</strong></p>
-    </div>
+    <p class="divider-sub">Why a sequence needs a memory rather than just a tally.</p>
   </section>
 
   <!-- DISCUSSION · SEQUENCE OR NOT -->
@@ -181,7 +131,7 @@
     <h2 class="slide-title">Think it through</h2>
     <div class="body center">
       <div class="q-topic">Sequence, or not?</div>
-      <p class="col-text" style="font-size:34px; max-width:1520px;">Order carries the signal here, but it does not carry it everywhere. For each task, decide: does the meaning live in the <strong>order</strong> of events, or would a model that just counts features do just as well?</p>
+      <p class="col-text" style="font-size:34px; max-width:1520px;">Order does not carry the signal everywhere. For each task, decide: does the meaning live in the <strong>order</strong> of events, or would counting features do just as well?</p>
       <div style="display:flex; flex-wrap:wrap; gap:18px; margin-top:38px;">
         <span class="chip">is this one email phishing?</span>
         <span class="chip">did this account get taken over?</span>
@@ -194,8 +144,8 @@
 
   <!-- ANCHOR · PREDICTIVE TEXT -->
   <section data-background-color="#ffffff">
-    <h2 class="slide-title">You already use one every day</h2>
-    <p class="sub">A phone keyboard reads what has been typed so far, in order, and suggests the next word. That is a sequence model with a memory, and it is already familiar.</p>
+    <h2 class="slide-title">Predictive text is a sequence model</h2>
+    <p class="sub">A phone keyboard reads what has been typed so far, in order, and suggests the next word: a sequence model with a memory, in daily use.</p>
     <div class="body center">
       <div class="cols gap-lg" style="align-items:center;">
         <div class="col ac-box">
@@ -207,7 +157,7 @@
           <div class="ac-typed">See you at the <span class="ac-caret">|</span></div>
           <p style="font:400 24px/1.4 var(--sans); color:var(--muted); margin:18px 0 0; text-align:center;">reads the words so far, then predicts the next</p>
         </div>
-        <p class="col col-text" style="font-size:32px;">Nothing here is exotic. The model reads in order, holds a running sense of the sentence, and guesses what follows.<br><br>Swap the sentence for a log or a session, and <strong>predict the next word</strong> becomes <strong style="color:var(--accent);">predict the next event</strong>. When the real next event is not the expected one, that surprise is the signal a defender wants.</p>
+        <p class="col col-text" style="font-size:32px;">The model reads in order, holds a running sense of the sentence, and guesses what follows.<br><br>Swap the sentence for a log, and <strong>predict the next word</strong> becomes <strong style="color:var(--accent);">predict the next event</strong>. When the real next event is not the expected one, that surprise is the defender's signal.</p>
       </div>
     </div>
   </section>
@@ -215,15 +165,13 @@
   <!-- 05 · MEMORY -->
   <section data-background-color="#ffffff">
     <h2 class="slide-title">Reading with a memory</h2>
-    <p class="sub">A reader takes in a sentence one word at a time, holding a running sense of what came before. A sequence model operates the same way: it keeps a small summary and updates it at every step.</p>
+    <p class="sub">A sequence model reads one event at a time, keeping a running summary of everything before it.</p>
     <div class="body center">
       <div class="cols gap-lg" style="align-items:center;">
-        <p class="col col-text" style="font-size:32px;">That running summary is the <strong>hidden state</strong>, the model's memory of the sequence so far, carried forward and updated with each new event.<br><br>When the model reads the 2 GB copy, the memory already encodes that this account just failed a burst of logins and then signed in successfully. Context accumulates.</p>
-        <div class="col card" style="padding:44px;">
-          <div class="card-eyebrow" style="color:var(--muted);">the loop, in words</div>
-          <p style="font:500 29px/1.6 var(--sans); color:var(--ink); margin-top:14px;">one event&nbsp;+&nbsp;the memory so far<br>→&nbsp;<span style="color:var(--accent);">an updated memory</span></p>
-          <div style="font-size:30px; color:var(--ink); text-align:center; margin:20px 0 0;">\( h_t = f(h_{t-1},\, x_t) \)</div>
-          <p style="font:400 25px/1.45 var(--sans); color:var(--muted); margin:18px 0 0;">The new state combines the old state with the new input. Repeated across the whole sequence.</p>
+        <p class="col col-text" style="font-size:32px;">That running summary is the <strong>hidden state</strong>, the model's memory of the sequence so far, carried forward and updated at every step.</p>
+        <div class="col card" style="padding:36px 44px 40px;">
+          <div style="font-size:32px; color:var(--ink); text-align:center; margin:8px 0 0;">\( \mathbf{h}_t = f(\mathbf{h}_{t-1},\, \mathbf{x}_t), \)</div>
+          <p class="eqprose">where \( \mathbf{h}_t \) is the updated memory after step \( t \), \( \mathbf{h}_{t-1} \) the memory from the previous step, \( \mathbf{x}_t \) the event read at that step, and \( f \) the update rule reused at every step; the counter \( t \) advances by one each step, so \( t-1 \) is one step earlier.</p>
         </div>
       </div>
     </div>
@@ -239,83 +187,29 @@
   <!-- ROLLED LOOP -->
   <section data-background-color="#ffffff">
     <h2 class="slide-title">A loop that reuses one cell</h2>
-    <p class="sub"><strong>Recurrent</strong> means exactly this: a single small cell with a loop. Its memory feeds back as an input to the next step, so the same cell, with the same weights, runs at every step.</p>
+    <p class="sub"><strong>Recurrent</strong> means a single small cell with a loop: its memory feeds back as an input to the next step, so the same cell, with the same weights, runs at every step.</p>
     <div class="body center">
-      <div class="cols gap-lg" style="align-items:center;">
-        <div class="col" style="text-align:center;">
-          <svg viewBox="0 0 620 360" style="width:100%; max-height:340px;" role="img" aria-label="A recurrent cell whose memory loops back to the next step">
-            <path d="M 500 190 C 500 60, 120 60, 120 190" fill="none" stroke="#3b56d8" stroke-width="3"/>
-            <polygon points="113,176 120,192 127,176" fill="#3b56d8"/>
-            <text x="310" y="42" text-anchor="middle" font-size="26" fill="#3b56d8" font-family="'IBM Plex Sans', sans-serif" font-weight="600">the memory feeds back to the next step</text>
-            <line x1="66" y1="210" x2="221" y2="210" stroke="#33353f" stroke-width="3"/>
-            <polygon points="221,204 233,210 221,216" fill="#33353f"/>
-            <text x="148" y="250" text-anchor="middle" font-size="24" fill="#6b6f80" font-family="'IBM Plex Mono', monospace">one line</text>
-            <rect x="235" y="150" width="150" height="120" rx="16" fill="#f6f6f4" stroke="#cfd0d6" stroke-width="2"/>
-            <text x="310" y="219" text-anchor="middle" font-size="30" fill="#15161d" font-family="'IBM Plex Sans', sans-serif" font-weight="600">the cell</text>
-            <line x1="385" y1="210" x2="551" y2="210" stroke="#33353f" stroke-width="3"/>
-            <polygon points="551,204 563,210 551,216" fill="#33353f"/>
-            <text x="474" y="250" text-anchor="middle" font-size="24" fill="#6b6f80" font-family="'IBM Plex Mono', monospace">memory</text>
-          </svg>
-          <p style="font:400 25px var(--sans); color:var(--muted); margin:8px 0 0;">one cell, looping</p>
-        </div>
-        <div class="col" style="text-align:center;">
-          <div style="font:500 30px var(--sans); color:var(--ink); margin-bottom:24px;">unrolled across the sequence</div>
-          <div style="display:flex; align-items:center; gap:12px; justify-content:center;">
-            <div class="cell" style="width:84px; height:70px; font-size:26px;">c</div>
-            <span class="flow-arrow" style="font-size:28px;">→</span>
-            <div class="cell" style="width:84px; height:70px; font-size:26px;">c</div>
-            <span class="flow-arrow" style="font-size:28px;">→</span>
-            <div class="cell" style="width:84px; height:70px; font-size:26px;">c</div>
-          </div>
-          <p style="font:400 25px var(--sans); color:var(--muted); margin:18px 0 0;">the same cell, drawn once per log line</p>
-        </div>
-      </div>
-      <p class="note" style="margin-top:32px;">The key point: one small network, one set of weights, reused at every step, not a fresh network for each line. That reuse is what lets a single model read a sequence of any length.</p>
+      <rnn-unroll style="display:block; width:100%; height:560px;" aria-label="A recurrent cell with a feedback loop, unrolling into a chain of the same cell that passes its memory forward at each step"></rnn-unroll>
     </div>
   </section>
 
   <!-- INSIDE THE CELL · THE NEURON EQUATION -->
   <section data-background-color="#ffffff">
     <h2 class="slide-title">Inside the cell is a familiar neuron</h2>
-    <p class="sub">The update written earlier as \( h_t = f(h_{t-1},\, x_t) \) hides nothing new. Open up \( f \) and it is the same neuron used across neural networks: each input times its weight, summed, plus a bias, through an activation.</p>
+    <p class="sub">Opening up \( f \) reveals nothing new: the same neuron as every network so far, inputs times weights, plus a bias, through an activation.</p>
     <div class="body center">
       <div class="cols gap-lg" style="align-items:stretch;">
-        <div class="col card" style="padding:44px; display:flex; flex-direction:column;">
-          <div class="card-eyebrow" style="color:var(--muted);">in a feedforward or convolutional network</div>
-          <div style="font-size:30px; color:var(--ink); text-align:center; margin:30px 0 26px;">\[ h = \phi\!\left( w_1 x_1 + w_2 x_2 + \cdots + b \right) \]</div>
-          <p style="font:400 27px/1.5 var(--sans); color:var(--body); margin:auto 0 0;">one bundle of inputs: features times their weights, a bias, then an activation.</p>
+        <div class="col card" style="padding:36px 40px; display:flex; flex-direction:column;">
+          <div class="card-title" style="margin:0;">The feedforward neuron</div>
+          <div style="font-size:30px; color:var(--ink); text-align:center; margin:26px 0 14px;">\[ h = \phi\!\left( w_1 x_1 + w_2 x_2 + \cdots + b \right), \]</div>
+          <p class="eqprose" style="max-width:none;">where \( h \) is the neuron's output, \( x_1, x_2, \dots \) are the input features, \( w_1, w_2, \dots \) the weight on each, \( b \) the bias, and \( \phi \) the activation.</p>
         </div>
-        <div class="col card tint-blue" style="padding:44px; display:flex; flex-direction:column;">
-          <div class="card-eyebrow" style="color:var(--accent);">in a recurrent network</div>
-          <div style="font-size:30px; color:var(--ink); text-align:center; margin:30px 0 26px;">\[ h_t = \phi\!\left( W_x\, x_t + \textcolor{#3b56d8}{W_h\, h_{t-1}} + b \right) \]</div>
-          <p style="font:400 27px/1.5 var(--sans); color:var(--body); margin:auto 0 0;">the very same form, with a second bundle: the <strong style="color:var(--accent);">memory</strong> from the previous step, weighted by its own \( W_h \).</p>
+        <div class="col card tint-blue" style="padding:36px 40px; display:flex; flex-direction:column;">
+          <div class="card-title" style="margin:0; color:var(--accent);">The recurrent neuron</div>
+          <div style="font-size:30px; color:var(--ink); text-align:center; margin:26px 0 14px;">\[ \mathbf{h}_t = \phi\!\left( \mathbf{W}_x\, \mathbf{x}_t + \textcolor{#3b56d8}{\mathbf{W}_h\, \mathbf{h}_{t-1}} + \mathbf{b} \right), \]</div>
+          <p class="eqprose" style="max-width:none;">where \( \mathbf{h}_t \) is the memory after step \( t \), \( \mathbf{x}_t \) the event at that step, \( \mathbf{h}_{t-1} \) the memory from the previous step, \( \mathbf{W}_x \) and \( \mathbf{W}_h \) the weights on the input and on the memory, \( \mathbf{b} \) the bias, and \( \phi \) the activation, usually \( \tanh \), keeping each value between &minus;1 and 1.</p>
         </div>
       </div>
-      <p class="lead" style="font-size:32px; color:var(--ink); margin-top:40px;">The same equation you have met before, <strong>features &times; weights + bias</strong>, through an activation. The one new idea is that a recurrent neuron also takes <strong style="color:var(--accent);">its own previous output</strong> as an input.</p>
-    </div>
-  </section>
-
-  <!-- 06 · THE RNN (visual) -->
-  <section data-background-color="#ffffff">
-    <h2 class="slide-title">The recurrent network unrolled</h2>
-    <p class="sub">A <strong>recurrent</strong> network is that loop drawn out. The same small network repeats at each step, passing its memory along the chain.</p>
-    <div class="body center">
-      <div class="rnn-grid">
-        <div class="seqts">08:01</div><div></div>
-        <div class="seqts">08:14</div><div></div>
-        <div class="seqts">08:15</div><div></div>
-        <div class="seqts">08:22</div>
-        <div class="cell">h₁</div><span class="flow-arrow">→</span>
-        <div class="cell">h₂</div><span class="flow-arrow">→</span>
-        <div class="cell">h₃</div><span class="flow-arrow">→</span>
-        <div class="cell dark">h₄</div>
-        <div class="seqtok">failed logins</div><div></div>
-        <div class="seqtok">login: admin</div><div></div>
-        <div class="seqtok">sudo: root</div><div></div>
-        <div class="seqtok">exfiltrate</div>
-      </div>
-      <p class="note" style="margin-top:30px;">Each box reads one log line plus the memory arriving from the left, then passes an updated memory to the right. By the final box, the memory has incorporated the whole sequence.</p>
-      <div class="in-practice"><span class="ip-tag">from the paper</span><p class="ip-text">Elman (1990)<a class="cite" href="#/references">[1]</a> set the template: "One approach is to represent <strong>time implicitly by its effects on processing</strong> rather than explicitly," letting a network's own memory carry the sequence.</p></div>
     </div>
   </section>
 
@@ -339,7 +233,7 @@
   <!-- PLAIN-ENGLISH MEMORY -->
   <section data-background-color="#ffffff">
     <h2 class="slide-title">What the memory actually holds</h2>
-    <p class="sub">The hidden state is a running summary. Read as plain English, here is the story it builds as each log line arrives.</p>
+    <p class="sub">Read in plain English, the hidden state builds a story as each log line arrives.</p>
     <div class="body center">
       <div class="mem-grid">
         <div class="mem-line"><span class="t">08:01</span>failed logins</div>
@@ -358,7 +252,8 @@
         <span class="flow-arrow" style="justify-content:center;">→</span>
         <div class="mem-note alarm">and data is leaving, this is an attack</div>
       </div>
-      <p class="note" style="margin-top:34px;">Each line updates the summary, and the context carries forward. By the last line, the memory has turned four ordinary events into one clear story, something a simple tally of events could never do.</p>
+      <p class="note" style="margin-top:34px;">By the last line, four ordinary events have become one clear story, something a tally of events could never tell.</p>
+      <div class="in-practice"><span class="ip-tag">from the paper</span><p class="ip-text">Elman (1990)<a class="cite" href="#/references">[1]</a> set the template: "One approach is to represent <strong>time implicitly by its effects on processing</strong> rather than explicitly," letting a network's own memory carry the sequence.</p></div>
     </div>
   </section>
 
@@ -368,8 +263,8 @@
     <p class="sub">As the chain grows long, the early steps wash out. By the end of a long session, the network has all but forgotten how it began.</p>
     <div class="body center">
       <div class="cols gap-lg" style="align-items:center;">
-        <p class="col col-text" style="font-size:32px;">The effect is analogous to the game of telephone: a message whispered down a long line arrives garbled, and the first words are lost.<br><br>This limitation is decisive here. The <strong>successful login</strong> that opens the intrusion can sit hundreds of log lines behind the <strong>exfiltration</strong> that ends it, yet that is exactly the link the model must retain.</p>
-        <div class="col card tint-red" style="padding:44px;">
+        <p class="col col-text" style="font-size:32px;">The effect is the game of telephone: a message whispered down a long line arrives garbled, and the first words are lost.<br><br>The <strong>successful login</strong> that opens an intrusion can sit hundreds of log lines behind the <strong>exfiltration</strong> that ends it, yet that is exactly the link the model must retain.</p>
+        <div class="col card tint-red" style="padding:36px 40px;">
           <div class="card-title" style="margin:0; color:var(--red);">The vanishing signal</div>
           <p style="font:400 27px/1.5 var(--sans); color:var(--body); margin:14px 0 0;">across long gaps the learning signal shrinks toward zero, so a plain RNN cannot tie distant events together.</p>
         </div>
@@ -377,27 +272,48 @@
     </div>
   </section>
 
+  <!-- WHY THE SIGNAL VANISHES -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">Repeated multiplication erases the signal</h2>
+    <p class="sub">Training unrolls the chain and passes the learning signal back through every step: <strong>backpropagation through time</strong>. Each step multiplies that signal by a similar factor, and Bengio, Simard &amp; Frasconi (1994)<a class="cite" href="#/references">[2]</a> showed the consequence is fundamental.</p>
+    <div class="body center">
+      <div class="cols gap-lg" style="align-items:stretch;">
+        <div class="col card tint-red" style="padding:40px 44px;">
+          <div class="card-title" style="margin:0; color:var(--red);">The signal vanishes</div>
+          <div style="font-size:36px; color:var(--ink); text-align:center; margin:30px 0;">\( 0.9^{30} \approx 0.04 \)</div>
+          <p style="font:400 27px/1.5 var(--sans); color:var(--body); margin:0;">a factor just below 1, met thirty times, all but erases the signal; distant events cannot be linked.</p>
+        </div>
+        <div class="col card" style="padding:40px 44px;">
+          <div class="card-title" style="margin:0;">The signal explodes</div>
+          <div style="font-size:36px; color:var(--ink); text-align:center; margin:30px 0;">\( 1.1^{30} \approx 17 \)</div>
+          <p style="font:400 27px/1.5 var(--sans); color:var(--muted); margin:0;">a factor just above 1 compounds upward, and training destabilizes.</p>
+        </div>
+      </div>
+      <div class="in-practice"><span class="ip-tag">in practice</span><p class="ip-text">The exploding side has a standard fix: <strong>gradient clipping</strong> caps the signal at a maximum size. The vanishing side has no such patch; it takes a new cell design.</p></div>
+    </div>
+  </section>
+
   <!-- 08 · LSTM -->
   <section data-background-color="#ffffff">
     <h2 class="slide-title">The LSTM adds gated memory</h2>
-    <p class="sub">The remedy adds a protected memory lane with small <strong>gates</strong> that decide what to retain, what to forget, and what to pass on. Important information can persist untouched across many steps.</p>
+    <p class="sub">The remedy is a protected memory lane governed by small <strong>gates</strong> that decide what to retain, what to forget, and what to pass on.</p>
     <div class="body center">
       <div class="cards">
-        <div class="card"><div class="card-eyebrow" style="color:var(--muted);">forget gate</div><div class="card-title" style="margin:8px 0 0;">Discard the stale</div><div class="card-note">releases what no longer matters.</div></div>
-        <div class="card"><div class="card-eyebrow" style="color:var(--muted);">input gate</div><div class="card-title" style="margin:8px 0 0;">Store the new</div><div class="card-note">writes in what is worth remembering.</div></div>
-        <div class="card"><div class="card-eyebrow" style="color:var(--muted);">output gate</div><div class="card-title" style="margin:8px 0 0;">Read what is needed</div><div class="card-note">exposes only the part relevant now.</div></div>
+        <div class="card"><div class="card-title" style="margin:0;">Forget gate</div><div class="card-note">releases what no longer matters.</div></div>
+        <div class="card"><div class="card-title" style="margin:0;">Input gate</div><div class="card-note">writes in what is worth remembering.</div></div>
+        <div class="card"><div class="card-title" style="margin:0;">Output gate</div><div class="card-note">exposes only the part relevant now.</div></div>
       </div>
-      <div class="in-practice"><span class="ip-tag">from the paper</span><p class="ip-text">Hochreiter &amp; Schmidhuber (1997)<a class="cite" href="#/references">[2]</a>: "LSTM can learn to <strong>bridge minimal time lags in excess of 1000 discrete-time steps</strong>" by enforcing "<strong>constant error flow through constant error carousels</strong>," directly solving the vanishing signal.</p></div>
-      <p class="note" style="margin-top:26px;">In code these gates are provided already: an <span class="code-inline">LSTM</span> layer in TensorFlow / Keras<a class="cite" href="#/references">[4]</a> is a single line, shown next.</p>
+      <div class="in-practice"><span class="ip-tag">from the paper</span><p class="ip-text">Hochreiter &amp; Schmidhuber (1997)<a class="cite" href="#/references">[3]</a>: "LSTM can learn to <strong>bridge minimal time lags in excess of 1000 discrete-time steps</strong>" by enforcing "<strong>constant error flow through constant error carousels</strong>," directly solving the vanishing signal.</p></div>
+      <p class="note" style="margin-top:26px;">In code the gates come built in: an <span class="code-inline">LSTM</span> layer in TensorFlow / Keras<a class="cite" href="#/references">[4]</a> is a single line.</p>
     </div>
   </section>
 
   <!-- LSTM CELL STATE -->
   <section data-background-color="#ffffff">
     <h2 class="slide-title">The cell state is a protected lane</h2>
-    <p class="sub">The LSTM's real trick is a second track, the <strong>cell state</strong>, that runs straight down the sequence. The gates only make small edits to it, so important information rides it untouched across many steps.</p>
+    <p class="sub">The LSTM's real trick is a second track, the <strong>cell state</strong>. The gates make only small edits to it, so important information rides it untouched across many steps.</p>
     <div class="body center">
-      <svg viewBox="0 0 1400 560" style="width:100%; max-height:500px;" role="img" aria-label="A standard LSTM cell: the cell-state track across the top, edited by forget, input, and output gates fed by the previous hidden state and the new input">
+      <svg viewBox="0 0 1400 560" style="width:100%; max-height:480px;" role="img" aria-label="A standard LSTM cell: the cell-state track across the top, edited by forget, input, and output gates fed by the previous hidden state and the new input">
         <!-- the LSTM cell -->
         <rect x="180" y="70" width="1040" height="420" rx="20" fill="#ffffff" stroke="#cfd0d6" stroke-width="2"/>
         <text x="205" y="108" font-size="24" fill="#9da0b0" font-family="'IBM Plex Mono', monospace">LSTM cell</text>
@@ -458,7 +374,8 @@
         <line x1="1060" y1="430" x2="1370" y2="430" stroke="#9da0b0" stroke-width="2"/>
         <text x="1335" y="412" text-anchor="middle" font-size="24" fill="#6b6f80" font-family="'IBM Plex Mono', monospace">hₜ</text>
       </svg>
-      <p class="note" style="margin-top:22px;">This is the standard LSTM cell. The cell state runs straight across the top, and the gates make only small edits to it: <strong>forget</strong> removes the stale (a &times; on the lane), <strong>input</strong> writes the new (a + on the lane), <strong>output</strong> reads out what matters now. Each <span style="color:var(--accent);">σ</span> is a gate that opens or closes, tanh shapes a value. Because the lane flows through almost untouched, the signal no longer fades, which is how the LSTM defeats the vanishing memory.</p>
+      <div style="font-size:32px; color:var(--ink); text-align:center; margin-top:20px;">\( \mathbf{c}_t = \mathbf{f}_t \times \mathbf{c}_{t-1} + \mathbf{i}_t \times \tilde{\mathbf{c}}_t, \)</div>
+      <p class="eqprose" style="text-align:center; max-width:1240px;">where \( \mathbf{c}_t \) and \( \mathbf{c}_{t-1} \) are the lane's new and previous memory, \( \tilde{\mathbf{c}}_t \) the candidate memory shaped by \( \tanh \), \( \mathbf{f}_t \) the forget gate (the \( \times \) on the lane, 0 to 1), and \( \mathbf{i}_t \) the input gate (feeding the \( + \), 0 to 1).</p>
     </div>
   </section>
 
@@ -482,7 +399,8 @@ model.<span class="fn">fit</span>(sessions, labels, epochs=<span class="n">5</sp
           <div><div class="step-eyebrow">Dense + sigmoid</div><p>the whole session becomes one verdict.</p></div>
         </div>
       </div>
-      <p class="note" style="margin-top:30px;">Many steps in, one label out: this is a <strong>many-to-one</strong> model, reading the entire session before it emits a single decision. Built with TensorFlow and Keras<a class="cite" href="#/references">[4]</a>, the same toolkit used in production.</p>
+      <p class="note" style="margin-top:30px;">Many steps in, one label out: a <strong>many-to-one</strong> model reads the entire session before it emits a single decision.</p>
+      <div class="in-practice"><span class="ip-tag">in practice</span><p class="ip-text">Real sessions differ in length, so before batching they are <strong>padded or truncated</strong> to one fixed length. That choice matters: truncate too aggressively and the model never sees the events that gave the session away.</p></div>
     </div>
   </section>
 
@@ -496,35 +414,32 @@ model.<span class="fn">fit</span>(sessions, labels, epochs=<span class="n">5</sp
   <!-- SEQUENCE SHAPES -->
   <section data-background-color="#ffffff">
     <h2 class="slide-title">One in, one out, or many</h2>
-    <p class="sub">The same recurrent core does different jobs by changing only what you read off it: a single verdict, a label at every step, or a whole new sequence.</p>
+    <p class="sub">The same recurrent core does different jobs depending on what is read off it: a single verdict, a label at every step, or a whole new sequence.</p>
     <div class="body center">
       <div class="cards">
-        <div class="card"><div class="card-eyebrow" style="color:var(--muted);">many to one</div><div style="font:600 34px var(--mono); color:var(--ink); margin:14px 0 8px;">▪ ▪ ▪ ▪ → ●</div><div class="card-note">read the whole sequence, emit one verdict.</div><div style="font:400 24px/1.4 var(--sans); color:var(--muted); margin-top:14px;"><strong style="color:var(--accent);">e.g.</strong> flag a session as intrusion, an email as spam. <em>(the shape behind sentiment analysis.)</em></div></div>
-        <div class="card"><div class="card-eyebrow" style="color:var(--muted);">many to many</div><div style="font:600 34px var(--mono); color:var(--ink); margin:14px 0 8px;">▪ ▪ ▪ ▪ → ● ● ● ●</div><div class="card-note">a label at every step, in step with the input.</div><div style="font:400 24px/1.4 var(--sans); color:var(--muted); margin-top:14px;"><strong style="color:var(--accent);">e.g.</strong> tag each log line or packet normal-or-suspicious, live. <em>(the shape behind word-by-word tagging.)</em></div></div>
-        <div class="card"><div class="card-eyebrow" style="color:var(--muted);">sequence to sequence</div><div style="font:600 34px var(--mono); color:var(--ink); margin:14px 0 8px;">▪ ▪ ▪ → ⟐ → ● ● ●</div><div class="card-note">one sequence in, a different one out. An encoder reads, a decoder writes.</div><div style="font:400 24px/1.4 var(--sans); color:var(--muted); margin-top:14px;"><strong style="color:var(--accent);">e.g.</strong> summarize a noisy alert stream into an incident report. <em>(the shape behind machine translation.)</em></div></div>
+        <div class="card"><div class="card-title" style="margin:0;">Many to one</div><div style="font:600 34px var(--mono); color:var(--ink); margin:14px 0 8px;">▪ ▪ ▪ ▪ → ●</div><div class="card-note">read the whole sequence, emit one verdict.</div><div style="font:400 24px/1.4 var(--sans); color:var(--muted); margin-top:14px;"><strong style="color:var(--accent);">e.g.</strong> flag a session as intrusion, an email as spam. <em>(the shape behind sentiment analysis.)</em></div></div>
+        <div class="card"><div class="card-title" style="margin:0;">Many to many</div><div style="font:600 34px var(--mono); color:var(--ink); margin:14px 0 8px;">▪ ▪ ▪ ▪ → ● ● ● ●</div><div class="card-note">a label at every step, in step with the input.</div><div style="font:400 24px/1.4 var(--sans); color:var(--muted); margin-top:14px;"><strong style="color:var(--accent);">e.g.</strong> tag each log line or packet normal-or-suspicious, live. <em>(the shape behind word-by-word tagging.)</em></div></div>
+        <div class="card"><div class="card-title" style="margin:0;">Sequence to sequence</div><div style="font:600 34px var(--mono); color:var(--ink); margin:14px 0 8px;">▪ ▪ ▪ → ⟐ → ● ● ●</div><div class="card-note">one sequence in, a different one out. An encoder reads, a decoder writes.</div><div style="font:400 24px/1.4 var(--sans); color:var(--muted); margin-top:14px;"><strong style="color:var(--accent);">e.g.</strong> summarize a noisy alert stream into an incident report. <em>(the shape behind machine translation.)</em></div></div>
       </div>
-      <p class="lead" style="font-size:30px; color:var(--ink); margin-top:34px;">The engine is unchanged; only the input and output shape change to fit the task. A fourth shape, <strong>one-to-many</strong>, turns one seed into a whole sequence, like a malware DGA spinning out domains, though it is rarer on defense.</p>
     </div>
   </section>
 
   <!-- VARIANTS: GRU & BIDIRECTIONAL -->
   <section data-background-color="#ffffff">
-    <h2 class="slide-title">Two variants you will meet</h2>
-    <p class="sub">Beyond the plain LSTM, two variants show up constantly in practice. Each is a single layer swap in code.</p>
+    <h2 class="slide-title">Two variants in wide use</h2>
+    <p class="sub">Beyond the plain LSTM, two variants appear constantly in practice; each is a single layer swap in code.</p>
     <div class="body center">
       <div class="cols gap-lg">
         <div class="col card" style="padding:44px;">
-          <div class="card-eyebrow" style="color:var(--accent);">GRU</div>
-          <div class="card-title" style="margin:8px 0 0;">A lighter gated cell</div>
-          <p style="font:400 27px/1.5 var(--sans); color:var(--body); margin:14px 0 0;">two gates instead of the LSTM's three, so fewer parameters and faster training, often with matching accuracy. A common default when data or compute is tight.</p>
+          <div class="card-title" style="margin:0;">GRU</div>
+          <p style="font:400 27px/1.5 var(--sans); color:var(--body); margin:14px 0 0;">the gated recurrent unit. Two gates instead of the LSTM's three, so fewer parameters and faster training, often with matching accuracy. A common default when data or compute is tight.</p>
         </div>
         <div class="col card" style="padding:44px;">
-          <div class="card-eyebrow" style="color:var(--accent);">Bidirectional</div>
-          <div class="card-title" style="margin:8px 0 0;">Read both directions</div>
-          <p style="font:400 27px/1.5 var(--sans); color:var(--body); margin:14px 0 0;">run one pass forward and one backward, then combine, so each step sees the whole session. Useful for a finished log, not for a live stream still arriving.</p>
+          <div class="card-title" style="margin:0;">Bidirectional</div>
+          <p style="font:400 27px/1.5 var(--sans); color:var(--body); margin:14px 0 0;">one pass forward and one backward, combined, so each step sees the whole session. Useful for a finished log rather than a live stream still arriving.</p>
         </div>
       </div>
-      <p class="note" style="margin-top:34px;">In Keras these are a one-word change: swap <span class="code-inline">LSTM</span> for <span class="code-inline">GRU</span>, or wrap it as <span class="code-inline">Bidirectional(LSTM(...))</span>. The reading-with-memory idea is identical; only the cell or the direction changes.</p>
+      <p class="note" style="margin-top:34px;">In Keras these are a one-word change: swap <span class="code-inline">LSTM</span> for <span class="code-inline">GRU</span>, or wrap it as <span class="code-inline">Bidirectional(LSTM(...))</span>.</p>
     </div>
   </section>
 
@@ -534,7 +449,7 @@ model.<span class="fn">fit</span>(sessions, labels, epochs=<span class="n">5</sp
     <p class="sub">Reading behavior as an ordered progression, rather than a bag of events, changes what a detector can catch.</p>
     <div class="body center">
       <div class="cards">
-        <div class="card"><div class="card-title" style="margin:0;">Behavior, not keywords</div><div class="card-note">flags a malicious <em>sequence</em> even when each log line appears innocuous alone.</div></div>
+        <div class="card"><div class="card-title" style="margin:0;">Behavior over keywords</div><div class="card-note">flags a malicious <em>sequence</em> even when each log line appears innocuous alone.</div></div>
         <div class="card"><div class="card-title" style="margin:0;">Long-range memory</div><div class="card-note">the LSTM ties an early login to a late exfiltration across the intervening noise.</div></div>
         <div class="card"><div class="card-title" style="margin:0;">Learn normal, flag the odd</div><div class="card-note">trained on ordinary sessions, it surfaces the ones that break the pattern.</div></div>
       </div>
@@ -557,7 +472,7 @@ model.<span class="fn">fit</span>(sessions, labels, epochs=<span class="n">5</sp
         <div class="card" style="padding:28px 26px;"><div class="card-title" style="margin:0; font-size:29px;">Payment fraud</div><div class="card-note" style="margin-top:8px;">a card's transactions form a sequence, and fraud shows up as a departure from its pattern.</div></div>
         <div class="card" style="padding:28px 26px;"><div class="card-title" style="margin:0; font-size:29px;">Malware sandbox</div><div class="card-note" style="margin-top:8px;">the order of API calls a program makes separates malware families from benign software.</div></div>
       </div>
-      <p class="note" style="margin-top:26px;">The same shape underlies insider-threat staging, SOC alert triage, and ransomware's burst of file operations. Log anomaly is a real system: Du et al. (2017)<a class="cite" href="#/references">[3]</a> built <strong>DeepLog</strong>, an LSTM trained on normal logs so any off-pattern entry surfaces as an anomaly.</p>
+      <p class="note" style="margin-top:26px;">The same shape underlies insider-threat staging, SOC alert triage, and ransomware's burst of file operations. Log anomaly is a real system: Du et al. (2017)<a class="cite" href="#/references">[5]</a> built <strong>DeepLog</strong>, an LSTM trained on normal logs so any off-pattern entry surfaces as an anomaly.</p>
     </div>
   </section>
 
@@ -625,17 +540,17 @@ model.<span class="fn">fit</span>(sessions, labels, epochs=<span class="n">5</sp
 
   <!-- DEFENSE IN DEPTH -->
   <section data-background-color="#ffffff">
-    <h2 class="slide-title">One model is one layer</h2>
-    <p class="sub">A real defense never rests on a single model. Different architectures fit different data, and you chain them, with a human at the end, so no one blind spot sinks the system.</p>
+    <h2 class="slide-title">The sequence model is one layer</h2>
+    <p class="sub">The sequence model is strong on ordered attacks and blind to much else, so it never runs alone. In a real pipeline it sits between a cheap first filter and a human analyst at the end.</p>
     <div class="body center">
       <div class="flow mid" style="gap:20px;">
-        <div class="step-card surface"><div class="step-eyebrow muted">layer 1</div><div class="step-name">Cheap filter</div><div class="step-note">cull the obvious cheaply, so heavier models only see what is left.</div></div>
+        <div class="step-card surface"><div class="step-eyebrow muted">layer 1</div><div class="step-name">Cheap filter</div><div class="step-note">cull the obvious traffic cheaply, so the sequence model only scores what is left.</div></div>
         <div class="flow-arrow">→</div>
-        <div class="step-card surface"><div class="step-eyebrow muted">layer 2</div><div class="step-name">The right model per shape</div><div class="step-note">a plain net for tables, a CNN for images, embeddings for text, an RNN for sequences.</div></div>
+        <div class="step-card surface"><div class="step-eyebrow muted">layer 2</div><div class="step-name" style="color:var(--accent);">The sequence model</div><div class="step-note">reads each session in order and flags the ordered attacks a bag of features would miss.</div></div>
         <div class="flow-arrow">→</div>
         <div class="step-card surface"><div class="step-eyebrow muted">layer 3</div><div class="step-name">Human analyst</div><div class="step-note">decides the ambiguous few at the top of the queue; volume to the model, judgment to the human.</div></div>
       </div>
-      <div class="in-practice sec"><span class="ip-tag">security</span><p class="ip-text"><strong>Defense in depth.</strong> Each layer covers the others' blind spots: evade the sequence model and an attacker still faces the filter, the other models, and the analyst. Layering does not remove risk, it <strong>raises the attacker's cost</strong>.</p></div>
+      <div class="in-practice sec"><span class="ip-tag">security</span><p class="ip-text"><strong>Layering.</strong> Other data shapes get their own model layer, a CNN for images, embeddings for text, so evading the sequence model still leaves an attacker facing the filter, the sibling models, and the analyst. Layering does not remove risk, it <strong>raises the attacker's cost</strong>.</p></div>
     </div>
   </section>
 
@@ -646,11 +561,10 @@ model.<span class="fn">fit</span>(sessions, labels, epochs=<span class="n">5</sp
     <div class="body center">
       <div class="cols gap-lg" style="align-items:center;">
         <div class="col card tint-red" style="padding:44px;">
-          <div class="card-eyebrow" style="color:var(--red);">the remaining squeeze</div>
-          <p style="font:500 30px/1.5 var(--sans); color:var(--ink); margin-top:14px;">a whole session&nbsp;→&nbsp;one fixed summary</p>
+          <p style="font:500 30px/1.5 var(--sans); color:var(--ink); margin:0;">a whole session&nbsp;→&nbsp;one fixed summary</p>
           <p style="font:400 25px/1.45 var(--sans); color:var(--muted); margin:18px 0 0;">reading a long report with a single sticky note; whatever it records, the rest is gone.</p>
         </div>
-        <p class="col col-text" style="font-size:32px;">The next idea, <strong style="color:var(--accent);">attention</strong>, keeps every step in reach and looks back at whichever ones matter, rather than trusting one summary.<br><br>It removes this last limit and opens the road to <strong>transformers</strong>. That is where the next session begins.</p>
+        <p class="col col-text" style="font-size:32px;">The next idea, <strong style="color:var(--accent);">attention</strong>, keeps every step in reach and looks back at whichever ones matter.<br><br>It removes this last limit and opens the road to <strong>transformers</strong>, where the next session begins.</p>
       </div>
     </div>
   </section>
@@ -664,12 +578,14 @@ model.<span class="fn">fit</span>(sessions, labels, epochs=<span class="n">5</sp
           <div><div style="font:600 30px var(--sans); color:var(--accent);">Sequence</div><p class="col-text" style="font-size:27px; margin-top:6px;">data where order matters: a log, a session, a sentence.</p></div>
           <div><div style="font:600 30px var(--sans); color:var(--accent);">Hidden state</div><p class="col-text" style="font-size:27px; margin-top:6px;">the running memory of everything read so far.</p></div>
           <div><div style="font:600 30px var(--sans); color:var(--accent);">RNN</div><p class="col-text" style="font-size:27px; margin-top:6px;">a recurrent network: a loop that carries that memory forward.</p></div>
+          <div><div style="font:600 30px var(--sans); color:var(--accent);">Backpropagation through time</div><p class="col-text" style="font-size:27px; margin-top:6px;">training the unrolled chain by passing the blame back through every step.</p></div>
         </div>
         <div class="col-rule"></div>
         <div class="col" style="display:flex; flex-direction:column; gap:24px;">
           <div><div style="font:600 30px var(--sans); color:var(--accent);">Vanishing signal</div><p class="col-text" style="font-size:27px; margin-top:6px;">the learning signal fading over long gaps, so early steps are lost.</p></div>
           <div><div style="font:600 30px var(--sans); color:var(--accent);">LSTM</div><p class="col-text" style="font-size:27px; margin-top:6px;">a gated memory cell that holds information across long gaps.</p></div>
           <div><div style="font:600 30px var(--sans); color:var(--accent);">Cell state</div><p class="col-text" style="font-size:27px; margin-top:6px;">the LSTM's protected memory lane, carried across many steps.</p></div>
+          <div><div style="font:600 30px var(--sans); color:var(--accent);">Gate</div><p class="col-text" style="font-size:27px; margin-top:6px;">a sigmoid valve between 0 and 1, deciding how much passes through.</p></div>
         </div>
       </div>
     </div>
@@ -695,18 +611,19 @@ model.<span class="fn">fit</span>(sessions, labels, epochs=<span class="n">5</sp
       <div class="refs">
         <div class="ref-col">
           <div class="ref-group">
-            <div class="ref"><span class="ref-n">[1]</span>Elman (1990). Finding structure in time. <span class="src"><a href="https://doi.org/10.1207/s15516709cog1402_1" target="_blank" rel="noopener">Cognitive Science 14(2).</a></span></div>
-            <div class="ref"><span class="ref-n">[2]</span>Hochreiter &amp; Schmidhuber (1997). Long short-term memory. <span class="src"><a href="https://doi.org/10.1162/neco.1997.9.8.1735" target="_blank" rel="noopener">Neural Computation 9(8).</a></span></div>
+            <div class="ref"><span class="ref-n">[1]</span>Elman (1990). Finding structure in time. <span class="src"><a href="https://doi.org/10.1207/s15516709cog1402_1" target="_blank" rel="noopener noreferrer">Cognitive Science 14(2).</a></span></div>
+            <div class="ref"><span class="ref-n">[2]</span>Bengio, Simard &amp; Frasconi (1994). Learning long-term dependencies with gradient descent is difficult. <span class="src"><a href="https://doi.org/10.1109/72.279181" target="_blank" rel="noopener noreferrer">IEEE Trans. Neural Networks 5(2).</a></span></div>
+            <div class="ref"><span class="ref-n">[3]</span>Hochreiter &amp; Schmidhuber (1997). Long short-term memory. <span class="src"><a href="https://doi.org/10.1162/neco.1997.9.8.1735" target="_blank" rel="noopener noreferrer">Neural Computation 9(8).</a></span></div>
           </div>
         </div>
         <div class="ref-col">
           <div class="ref-group">
-            <div class="ref"><span class="ref-n">[3]</span>Du et al. (2017). DeepLog: anomaly detection and diagnosis from system logs through deep learning. <span class="src"><a href="https://doi.org/10.1145/3133956.3134015" target="_blank" rel="noopener">ACM CCS.</a></span></div>
-            <div class="ref"><span class="ref-n">[4]</span>TensorFlow / Keras (recurrent layers). <span class="src"><a href="https://keras.io/api/layers/recurrent_layers/" target="_blank" rel="noopener">keras.io</a></span></div>
+            <div class="ref"><span class="ref-n">[4]</span>TensorFlow / Keras (recurrent layers). <span class="src"><a href="https://keras.io/api/layers/recurrent_layers/" target="_blank" rel="noopener noreferrer">keras.io</a></span></div>
+            <div class="ref"><span class="ref-n">[5]</span>Du et al. (2017). DeepLog: anomaly detection and diagnosis from system logs through deep learning. <span class="src"><a href="https://doi.org/10.1145/3133956.3134015" target="_blank" rel="noopener noreferrer">ACM CCS.</a></span></div>
           </div>
         </div>
       </div>
-      <div class="in-practice" style="margin-top:40px;"><span class="ip-tag">thank you</span><p class="ip-text">These decks are shared freely under <strong>Creative Commons BY-NC-SA 4.0</strong>: keep the credit to Francisco Laplace, keep them non-commercial, and share any adaptations alike. Latest versions at <a href="https://laplacef.github.io/deep-learning-for-cyber/" target="_blank" rel="noopener">laplacef.github.io/deep-learning-for-cyber</a>.</p></div>
+      <div class="in-practice" style="margin-top:40px;"><span class="ip-tag">thank you</span><p class="ip-text">These decks are shared freely under <strong>Creative Commons BY-NC-SA 4.0</strong>: keep the credit to Francisco Laplace, keep them non-commercial, and share any adaptations alike. Latest versions at <a href="https://laplacef.github.io/deep-learning-for-cyber/" target="_blank" rel="noopener noreferrer">laplacef.github.io/deep-learning-for-cyber</a>.</p></div>
     </div>
   </section>
 
@@ -716,6 +633,7 @@ model.<span class="fn">fit</span>(sessions, labels, epochs=<span class="n">5</sp
 <script src="../assets/reveal/reveal.js"></script>
 <script src="../assets/version.js"></script>
 <script src="../assets/deck-chrome.js"></script>
+<script src="../assets/visuals/rnn-unroll.js"></script>
 <script src="../assets/katex/katex.min.js"></script>
 <script src="../assets/katex/auto-render.min.js"></script>
 <script>
