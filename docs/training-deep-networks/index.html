@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Training Deep Networks — Deep Learning for Cyber</title>
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../assets/fonts/ibm-plex-sans-400.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../assets/fonts/ibm-plex-sans-600.woff2">
 <link rel="stylesheet" href="../assets/reveal/reset.css">
 <link rel="stylesheet" href="../assets/reveal/reveal.css">
 <link rel="stylesheet" href="../assets/fonts/fonts.css">
@@ -12,8 +14,10 @@
 <style>
   /* Reader-text normalization: one body size across slides. */
   .reveal .col-text { font-size: 32px; }
+  /* Subtitles balance across their lines (avoids the reflow text-wrap:pretty can cause). */
+  .reveal .sub { text-wrap: balance; }
   /* Prevent single-word orphan lines in wrapping prose. */
-  .reveal .cover-sub, .reveal .sub, .reveal .divider-sub, .reveal .lead,
+  .reveal .cover-sub, .reveal .divider-sub, .reveal .lead,
   .reveal .col-text, .reveal .card-note, .reveal .card p, .reveal .note,
   .reveal .step-note, .reveal .ip-text, .reveal .code-annot p { text-wrap: pretty; }
   /* Class-imbalance dot grid (slide 12): 100 emails, one is phishing. */

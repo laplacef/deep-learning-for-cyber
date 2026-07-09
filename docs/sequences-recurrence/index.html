@@ -4,6 +4,8 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Sequences &amp; Recurrence — Deep Learning for Cyber</title>
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../assets/fonts/ibm-plex-sans-400.woff2">
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../assets/fonts/ibm-plex-sans-600.woff2">
 <link rel="stylesheet" href="../assets/reveal/reset.css">
 <link rel="stylesheet" href="../assets/reveal/reveal.css">
 <link rel="stylesheet" href="../assets/fonts/fonts.css">
@@ -14,8 +16,10 @@
   .reveal .col-text { font-size: 32px; }
   /* Equation legends: a running-prose "where" clause under a display formula. */
   .reveal .eqprose { font: 400 25px/1.55 var(--sans); color: var(--body); max-width: 1040px; margin: 16px auto 0; text-align: left; }
+  /* Subtitles balance across their lines (avoids the reflow text-wrap:pretty can cause). */
+  .reveal .sub { text-wrap: balance; }
   /* Prevent single-word orphan lines in wrapping prose. */
-  .reveal .cover-sub, .reveal .sub, .reveal .divider-sub, .reveal .lead,
+  .reveal .cover-sub, .reveal .divider-sub, .reveal .lead,
   .reveal .col-text, .reveal .card-note, .reveal .card p, .reveal .note,
   .reveal .ip-text, .reveal .code-annot p { text-wrap: pretty; }
 </style>
