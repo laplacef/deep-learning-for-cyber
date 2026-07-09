@@ -12,6 +12,15 @@
 <style>
   /* Reader-text normalization: one body size across slides. */
   .reveal .col-text { font-size: 32px; }
+  /* Equation legends: a running-prose "where" clause under a display formula. */
+  .reveal .eqprose { font: 400 25px/1.55 var(--sans); color: var(--body); max-width: 1040px; margin: 16px auto 0; text-align: left; }
+  /* Subtitles fill each line consistently (greedy wrap, no reflow, no narrow balanced lines). */
+  .reveal .sub { text-wrap: wrap; }
+  /* Prevent single-word orphan lines in wrapping prose. */
+  .reveal .cover-sub, .reveal .divider-sub, .reveal .lead,
+  .reveal .col-text, .reveal .card-note, .reveal .card p, .reveal .note,
+  .reveal .step-note, .reveal .ip-text, .reveal .code-annot p,
+  .reveal .emb-note, .reveal .vcap { text-wrap: pretty; }
 
   /* Slide 14b: illustrative embedding table + vector arithmetic. */
   .reveal .emb-tbl { border-collapse: collapse; width: 100%; font-family: var(--mono); color: var(--ink); }
@@ -32,24 +41,8 @@
   .reveal .vbrk.res { border-color: var(--accent); }
   .reveal .vbrk.res span { color: var(--accent); font-weight: 600; }
   .reveal .vop { font: 500 34px var(--mono); color: var(--muted); }
-  .reveal .vcap { font: 400 26px/1.45 var(--sans); color: var(--muted); text-align: center; margin: 32px 0 0; }
+  .reveal .vcap { font: 400 26px/1.45 var(--sans); color: var(--muted); text-align: center; margin: 22px 0 0; }
 
-  /* One training step through the shallow network (skip-gram). */
-  .reveal .sg-net { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-  .reveal .sg-stack { display: flex; flex-direction: column; align-items: center; gap: 14px; }
-  .reveal .sg-cap2 { font: 400 24px/1.35 var(--sans); color: var(--muted); text-align: center; max-width: 260px; }
-  .reveal .onehot { display: flex; flex-direction: column; gap: 6px; }
-  .reveal .onehot span { width: 64px; padding: 6px 0; text-align: center; font: 500 28px var(--mono); color: var(--muted); background: var(--bg-alt); border-radius: 6px; }
-  .reveal .onehot span.on { background: var(--accent); color: #fff; font-weight: 600; }
-  .reveal .sg-op { font: 500 26px var(--mono); color: var(--muted); white-space: nowrap; }
-  .reveal .sg-bars { display: flex; flex-direction: column; gap: 12px; min-width: 540px; }
-  .reveal .sg-bar-row { display: flex; align-items: center; gap: 14px; }
-  .reveal .sg-bar-label { width: 132px; text-align: right; font: 500 26px var(--mono); color: var(--ink); }
-  .reveal .sg-bar-track { flex: 1; height: 26px; background: var(--bg-alt); border-radius: 6px; overflow: hidden; }
-  .reveal .sg-bar-fill { display: block; height: 100%; background: var(--line-3); border-radius: 6px; }
-  .reveal .sg-bar-row.hit .sg-bar-fill { background: var(--accent); }
-  .reveal .sg-prob { width: 56px; font: 500 26px var(--mono); color: var(--muted); }
-  .reveal .sg-hit { width: 28px; font: 600 26px var(--mono); color: var(--accent); }
 </style>
 </head>
 <body>
@@ -60,7 +53,7 @@
   <section class="cover" data-background-color="#ffffff">
     <h1 class="cover-title">Text<br>Embeddings</h1>
     <p class="cover-sub">How a model reads an email, a log line, or a URL, by turning words into numbers that still carry their meaning.</p>
-    <div class="deck-footer">Deep Learning for Cyber&nbsp;&nbsp;·&nbsp;&nbsp;<a class="name" href="https://laplacef.me" target="_blank" rel="noopener">Francisco Laplace</a></div>
+    <div class="deck-footer">Deep Learning for Cyber&nbsp;&nbsp;·&nbsp;&nbsp;<a class="name" href="https://laplacef.me" target="_blank" rel="noopener noreferrer">Francisco Laplace</a></div>
   </section>
 
   <!-- 02 · AGENDA -->
@@ -69,10 +62,10 @@
     <div class="body center">
       <ol class="agenda">
         <li>Why a model cannot read words directly</li>
-        <li>The obvious approach, and where it breaks down</li>
-        <li>Embeddings, where meaning becomes distance</li>
-        <li>Where the numbers come from, and how they are used in code</li>
-        <li>Why this catches reworded phishing, and the traps to watch for</li>
+        <li>The obvious approach and where it breaks down</li>
+        <li>How embeddings turn meaning into distance</li>
+        <li>Where the numbers come from and how they are used in code</li>
+        <li>Why this catches reworded phishing and the traps to watch for</li>
       </ol>
     </div>
   </section>
@@ -160,8 +153,8 @@
 
   <!-- 07 · THE OBVIOUS IDEA, AND WHY IT STALLS -->
   <section data-background-color="#ffffff">
-    <h2 class="slide-title">The obvious idea, and why it stalls</h2>
-    <p class="sub">The natural first approach gives each word its own slot in a large dictionary. A single word becomes a <strong>one-hot</strong> vector, one slot lit; a whole message becomes a <strong>bag-of-words</strong>, those slots tallied. It is a reasonable, inexpensive baseline, but it discards the one property that must be preserved.</p>
+    <h2 class="slide-title">The obvious idea and why it stalls</h2>
+    <p class="sub">The natural first approach gives each word its own slot in a large dictionary: a reasonable, inexpensive baseline that discards the one property that must be preserved.</p>
     <div class="body center">
       <div style="display:flex; align-items:center; gap:34px; margin-bottom:46px; flex-wrap:wrap;">
         <div class="card" style="padding:24px 32px;"><div class="card-eyebrow" style="color:var(--muted);">one word, "verify"</div><div style="font:600 38px var(--mono); color:var(--ink); margin-top:12px;">[ 0, 0, 1, 0, 0, … ]</div><div style="font:500 24px var(--mono); color:var(--muted2); margin-top:10px;">one-hot, a single slot lit</div></div>
@@ -195,8 +188,8 @@
 
   <!-- 12 · ONE WORD -> A VECTOR -->
   <section data-background-color="#ffffff">
-    <h2 class="slide-title">One word, a short vector of numbers</h2>
-    <p class="sub">The list is called a <strong>vector</strong>, a row of numbers. No single number carries meaning on its own; the meaning lives in the whole pattern.</p>
+    <h2 class="slide-title">One word becomes a short vector of numbers</h2>
+    <p class="sub">That row of numbers is called a <strong>vector</strong>. No single number carries meaning on its own; the meaning lives in the whole pattern.</p>
     <div class="body center">
       <div style="display:flex; flex-direction:column; gap:22px;">
         <div style="display:flex; align-items:center; gap:30px;">
@@ -228,7 +221,7 @@
   <!-- · CHOOSING THE NUMBER OF DIMENSIONS -->
   <section data-background-color="#ffffff">
     <h2 class="slide-title">Choosing the number of dimensions</h2>
-    <p class="sub">The length of the vector is a design choice, set before training and not learned by the model. It is a hyperparameter, tuned to balance capacity against cost.</p>
+    <p class="sub">The length of the vector is chosen before training rather than learned. This hyperparameter trades capacity against cost.</p>
     <div class="body center">
       <div class="cols gap-lg" style="align-items:stretch;">
         <div class="col card" style="padding:40px;">
@@ -241,19 +234,19 @@
         </div>
       </div>
       <div class="in-practice"><span class="ip-tag">in practice</span><p class="ip-text">Classic word embeddings run roughly 50 to 300 dimensions; powers of two such as 64, 128, and 256 are conventional. Large language models go far higher, 768 and beyond. The 64 used here is illustrative.</p></div>
-      <p class="note" style="margin-top:24px;">This count is the width of one word's vector, chosen independently of how many layers or neurons a model built on those vectors uses. The values inside each vector are filled during training, learned from a random start or loaded from a pretrained map.</p>
+      <p class="note" style="margin-top:24px;">This count is the width of one word's vector, independent of how many layers or neurons the model built on it uses.</p>
     </div>
   </section>
 
   <!-- 13 · THE MAP (signature visual) -->
   <section data-background-color="#ffffff">
     <h2 class="slide-title">Meaning becomes distance</h2>
-    <p class="sub">Words begin scattered, as plain IDs where position means nothing. They settle into neighborhoods by meaning, and the words "verify" and "confirm" drift together.</p>
-    <p class="note" style="margin:18px 0 6px;">Explore: <a href="https://projector.tensorflow.org" target="_blank" rel="noopener" style="color:var(--accent); text-decoration:none;">projector.tensorflow.org</a><a class="cite" href="#/references">[1]</a></p>
+    <p class="sub">Words begin as plain IDs whose position means nothing. They settle into neighborhoods by meaning, and "verify" and "confirm" drift together.</p>
+    <p class="note" style="margin:18px 0 6px;">Explore: <a href="https://projector.tensorflow.org" target="_blank" rel="noopener noreferrer" style="color:var(--accent); text-decoration:none;">projector.tensorflow.org</a><a class="cite" href="#/references">[1]</a></p>
     <div class="body">
       <div class="stage" style="max-height:540px;"><word-map></word-map></div>
-      <p class="note" style="text-align:center; max-width:1160px; margin:16px auto 4px;">Closeness is measured as the cosine of the angle between two vectors: a value of 1 means the same direction, 0 unrelated.</p>
-      <p class="note" style="text-align:center; margin:0; font-size:30px;">\( \cos(\theta) = \dfrac{a \cdot b}{\lVert a\rVert\,\lVert b\rVert} \)</p>
+      <p class="note" style="text-align:center; max-width:1160px; margin:16px auto 4px;">Closeness is measured as the cosine of the angle \( \theta \) between two word vectors \( \mathbf{a} \) and \( \mathbf{b} \): a value of 1 means the same direction, 0 unrelated.</p>
+      <p class="note" style="text-align:center; margin:0; font-size:30px;">\( \cos(\theta) = \dfrac{\mathbf{a} \cdot \mathbf{b}}{\lVert \mathbf{a}\rVert\,\lVert \mathbf{b}\rVert} \)</p>
     </div>
   </section>
 
@@ -276,7 +269,7 @@
   <!-- 14b · WHY THE ARITHMETIC WORKS -->
   <section data-background-color="#ffffff">
     <h2 class="slide-title">Why that arithmetic works</h2>
-    <p class="sub">Each word holds a few coordinates of meaning. Subtracting <strong>man</strong> and adding <strong>woman</strong> cancels the parts they share, swaps the one they differ on, and leaves royalty untouched, landing on the vector for <strong>queen</strong>.</p>
+    <p class="sub">Each word holds a few coordinates of meaning. Subtracting <strong>man</strong> and adding <strong>woman</strong> swaps gender while leaving royalty untouched, so the result lands on <strong>queen</strong>.</p>
     <div class="body center">
       <div class="cols gap-lg" style="align-items:center;">
         <div class="col" style="flex:0 0 860px;">
@@ -325,7 +318,7 @@
   <!-- 15 · WHERE THE NUMBERS COME FROM -->
   <section data-background-color="#ffffff">
     <h2 class="slide-title">Where the numbers come from</h2>
-    <p class="sub">They are not set by hand. They are <strong>learned</strong>, using the same gradient steps that train any network's weights.</p>
+    <p class="sub">They are not set by hand. The same gradient steps that train any network's weights <strong>learn</strong> them too.</p>
     <div class="body center">
       <div class="cols gap-lg" style="align-items:center;">
         <p class="col col-text" style="font-size:32px;">The guiding principle is old and simple:<br><strong style="color:var(--accent);">a word is known by the company it keeps.</strong><br><br>Words that appear in similar surroundings are nudged toward similar locations on the map.</p>
@@ -342,10 +335,10 @@
   <!-- · LEARNING THE MAP: PREDICT THE NEIGHBORS -->
   <section data-background-color="#ffffff">
     <h2 class="slide-title">Learning the map by predicting the neighbors</h2>
-    <p class="sub">A small window slides along billions of sentences. From the word in the middle, the model attempts to <strong>predict the words around it</strong>, and each prediction nudges the vectors.</p>
+    <p class="sub">A small window slides along billions of sentences; from the middle word, the model predicts the words around it, nudging the vectors each time.</p>
     <div class="body center">
       <div style="height:300px; margin-bottom:36px;"><skipgram-window></skipgram-window></div>
-      <p class="lead" style="font-size:32px; max-width:1500px;">Words that keep similar company are pulled toward the same region, with no labels and no manual tuning, only the same gradient steps that train any network. This prediction task is <strong style="color:var(--accent);">skip-gram</strong>; predicting the center word from its neighbors instead is <strong style="color:var(--accent);">CBOW</strong>, the two architectures word2vec introduced.</p>
+      <p class="lead" style="font-size:32px; max-width:1500px;">Words that keep similar company are pulled toward the same region. This prediction task is <strong style="color:var(--accent);">skip-gram</strong>; predicting the center word from its neighbors instead is <strong style="color:var(--accent);">CBOW</strong>, the two architectures word2vec introduced.</p>
       <div class="in-practice"><span class="ip-tag">from the paper</span><p class="ip-text">word2vec (Mikolov et al., 2013)<a class="cite" href="#/references">[4]</a>: "We propose two novel model architectures for computing <strong>continuous vector representations of words from very large data sets</strong>," skip-gram being one of them.</p></div>
     </div>
   </section>
@@ -353,33 +346,19 @@
   <!-- · INSIDE ONE TRAINING STEP -->
   <section data-background-color="#ffffff">
     <h2 class="slide-title">Inside one training step</h2>
-    <p class="sub">A single pair flows through a shallow network. The center word enters as a one hot vector, becomes its embedding, and the network scores every word for how likely it is to be a neighbor.</p>
+    <p class="sub">In one training step the model guesses a word's neighbors, checks the guess, and corrects itself.</p>
     <div class="body center">
-      <div class="sg-net">
-        <div class="sg-stack">
-          <div class="onehot"><span>0</span><span class="on">1</span><span>0</span><span>0</span><span>0</span></div>
-          <p class="sg-cap2">the center word, one hot over the vocabulary</p>
-        </div>
-        <div class="sg-op">× W →</div>
-        <div class="sg-stack">
-          <div class="vbrk"><span>.12</span><span>.04</span><span>.19</span><span>.07</span></div>
-          <p class="sg-cap2">its embedding, the hidden layer (one row of the table)</p>
-        </div>
-        <div class="sg-op">× W' →</div>
-        <div class="sg-stack">
-          <div class="sg-bars">
-            <div class="sg-bar-row hit"><span class="sg-bar-label">please</span><span class="sg-bar-track"><span class="sg-bar-fill" style="width:100%"></span></span><span class="sg-prob">.28</span><span class="sg-hit">✓</span></div>
-            <div class="sg-bar-row hit"><span class="sg-bar-label">account</span><span class="sg-bar-track"><span class="sg-bar-fill" style="width:93%"></span></span><span class="sg-prob">.26</span><span class="sg-hit">✓</span></div>
-            <div class="sg-bar-row hit"><span class="sg-bar-label">your</span><span class="sg-bar-track"><span class="sg-bar-fill" style="width:86%"></span></span><span class="sg-prob">.24</span><span class="sg-hit">✓</span></div>
-            <div class="sg-bar-row"><span class="sg-bar-label">login</span><span class="sg-bar-track"><span class="sg-bar-fill" style="width:57%"></span></span><span class="sg-prob">.16</span><span class="sg-hit"></span></div>
-            <div class="sg-bar-row"><span class="sg-bar-label">verify</span><span class="sg-bar-track"><span class="sg-bar-fill" style="width:21%"></span></span><span class="sg-prob">.06</span><span class="sg-hit"></span></div>
-          </div>
-          <p class="sg-cap2" style="max-width:540px;">Softmax turns the scores into probabilities that sum to 1.</p>
-          <p class="sg-cap2" style="max-width:540px; color:var(--ink); font-size:32px; margin-top:2px;">\( P(w) = \dfrac{e^{s_w}}{\sum_{j} e^{s_j}} \)</p>
-        </div>
+      <p class="note" style="text-align:center; font-family:var(--mono); color:var(--muted); margin:0 0 26px; font-size:26px;">please 2.0 · account 1.5 · your 1.0 · login 0.0 · verify −1.0</p>
+      <div style="font-size:30px; color:var(--ink); text-align:center;">
+        \[ \begin{aligned}
+        P(w) &= \dfrac{e^{s_w}}{\sum_j e^{s_j}} \\[10pt]
+        P(\text{please}) &= \dfrac{e^{2.0}}{e^{2.0} + e^{1.5} + e^{1.0} + e^{0.0} + e^{-1.0}} \\[10pt]
+        &= \dfrac{7.4}{7.4 + 4.5 + 2.7 + 1.0 + 0.4} \\[10pt]
+        &= \dfrac{7.4}{16.0} \\[10pt]
+        &= \textcolor{#3b56d8}{0.46}
+        \end{aligned} \]
       </div>
-      <p class="vcap">The guess is compared to the real neighbor, and every vector is nudged so the true word scores a little higher next time. Repeated across billions of pairs, the map sorts itself.</p>
-      <div class="in-practice"><span class="ip-tag">in practice</span><p class="ip-text">After training, the output table W' is discarded. The kept embedding table W <strong>is</strong> the map: one row per word, the vectors every later slide uses.</p></div>
+      <p class="vcap" style="margin-top:26px;">Repeated across billions of pairs, the map organizes itself.</p>
     </div>
   </section>
 
@@ -393,10 +372,10 @@
   <!-- 16 · PRETRAINED -->
   <section data-background-color="#ffffff">
     <h2 class="slide-title">Training need not start from scratch</h2>
-    <p class="sub">The expensive training has already been done by others, and the maps released publicly. One can be downloaded, reused, and adjusted slightly on local data.</p>
+    <p class="sub">Others have already done the expensive training and released the maps publicly. A map can be downloaded, reused, and adjusted slightly on local data.</p>
     <div class="body center">
       <div class="cards">
-        <div class="card"><div class="card-title" style="margin:0;">word2vec</div><div class="card-note">Google, the model that popularised the idea.</div></div>
+        <div class="card"><div class="card-title" style="margin:0;">word2vec</div><div class="card-note">Google, the model that popularized the idea.</div></div>
         <div class="card"><div class="card-title" style="margin:0;">GloVe<a class="cite" href="#/references">[5]</a></div><div class="card-note">Stanford, 400,000 words, free to download.</div></div>
         <div class="card"><div class="card-title" style="margin:0;">fastText</div><div class="card-note">Meta, robust to unusual and misspelled words.</div></div>
       </div>
@@ -406,14 +385,23 @@
   <!-- 17 · WORDS -> A WHOLE EMAIL -->
   <section data-background-color="#ffffff">
     <h2 class="slide-title">From words to a whole email</h2>
-    <p class="sub">An email is many words. The simplest approach looks up each word's vector, then <strong>averages them</strong> into one, the email's center of gravity.</p>
+    <p class="sub">An email is many words. Averaging their vectors into one gives a single vector a classifier can read and judge.</p>
     <div class="body center">
       <div class="cols gap-lg" style="align-items:center;">
-        <div class="col" style="flex:0 0 600px; height:360px;"><vector-average></vector-average></div>
-        <p class="col col-text" style="font-size:32px;">However many words an email contains, they collapse to a single vector, its center of gravity. A simple classifier then reads that one vector and decides: phishing or not.</p>
+        <div class="col" style="flex:0 0 600px; height:520px;"><vector-average></vector-average></div>
+        <div class="col" style="display:flex; flex-direction:column; gap:26px;">
+          <div class="card" style="padding:30px 40px;">
+            <div style="font:600 30px var(--sans); color:var(--accent);">Words to one vector</div>
+            <div style="font-size:34px; color:var(--ink); text-align:center; margin:16px 0 10px;">\[ \mathbf{e} = \dfrac{\mathbf{v}_1 + \mathbf{v}_2 + \cdots + \mathbf{v}_n}{n} \]</div>
+            <p style="font:400 25px/1.4 var(--sans); color:var(--muted); text-align:center; margin:0;">the email vector \( \mathbf{e} \), the average of its \( n \) word vectors \( \mathbf{v}_1, \dots, \mathbf{v}_n \).</p>
+          </div>
+          <div class="card" style="padding:30px 40px;">
+            <div style="font:600 30px var(--sans); color:var(--accent);">One vector to a verdict</div>
+            <div style="font-size:34px; color:var(--ink); text-align:center; margin:16px 0 10px;">\[ P(\text{phishing}) = \sigma(\mathbf{w} \cdot \mathbf{e} + b) \]</div>
+            <p style="font:400 25px/1.4 var(--sans); color:var(--muted); text-align:center; margin:0;">the classifier weighs \( \mathbf{e} \) with \( \mathbf{w} \) and bias \( b \); the sigmoid \( \sigma \) gives a phishing probability.</p>
+          </div>
+        </div>
       </div>
-      <div style="font-size:38px; color:var(--ink); text-align:center; margin:28px 0 0;">\[ \text{email vector} = \dfrac{v_1 + v_2 + \cdots + v_n}{n} \]</div>
-      <p class="note" style="margin-top:14px;">Add the word vectors and divide by how many there are. A more elaborate option preserves the word <em>order</em> by feeding the sequence to the network, but the average is the simplest first step, and it often performs surprisingly well.</p>
     </div>
   </section>
 
@@ -493,7 +481,7 @@ layers.<span class="fn">Embedding</span>(<span class="n">20000</span>, <span cla
   <!-- 21 · CHARACTER OBFUSCATION (fastText payoff) -->
   <section data-background-color="#ffffff">
     <h2 class="slide-title">When attackers deliberately misspell</h2>
-    <p class="sub">Rewording substitutes whole words. This technique alters the letters instead, deliberately, to evade any list of known words.</p>
+    <p class="sub">Rewording substitutes whole words; this alters the letters instead, to evade any list of known words.</p>
     <div class="body center">
       <div class="chips" style="gap:18px; margin-bottom:44px;">
         <span class="chip" style="font:500 31px var(--mono); padding:18px 28px;">paypal → paypa1</span>
@@ -505,7 +493,7 @@ layers.<span class="fn">Embedding</span>(<span class="n">20000</span>, <span cla
         <div class="col card tint-red" style="padding:36px;"><div class="card-title" style="margin:0; color:var(--red);">Word list or keyword filter</div><p style="font:400 27px/1.45 var(--sans); color:var(--body); margin:12px 0 0;">every unusual spelling is a new token it has never seen. Out of vocabulary, no match, it passes through.</p></div>
         <div class="col card tint-blue" style="padding:36px;"><div class="card-title" style="margin:0; color:var(--accent);">Subword embeddings (fastText)</div><p style="font:400 27px/1.45 var(--sans); color:var(--body); margin:12px 0 0;">the vector is built from letter chunks. "paypa1" shares almost all its chunks with "paypal," so it lands beside the real word and is still flagged.</p></div>
       </div>
-      <p class="lead" style="font-size:32px; color:var(--ink); margin-top:46px;">That same operation, breaking a word into subword pieces, is also the first step inside a modern language model. A small idea, directly on the path to LLMs.</p>
+      <p class="lead" style="font-size:32px; color:var(--ink); margin-top:46px;">That same operation, breaking a word into subword pieces, is also the first step inside a modern language model, directly on the path to LLMs.</p>
       <div class="in-practice"><span class="ip-tag">from the paper</span><p class="ip-text">fastText (Bojanowski et al., 2017)<a class="cite" href="#/references">[7]</a>: "A vector representation is associated to each <strong>character n-gram</strong>; words being represented as the sum of these representations," which is why a misspelling still lands near the real word.</p></div>
     </div>
   </section>
@@ -528,7 +516,7 @@ layers.<span class="fn">Embedding</span>(<span class="n">20000</span>, <span cla
   <!-- 23 · CONTEXTUAL EMBEDDINGS (LLM seed) -->
   <section data-background-color="#ffffff">
     <h2 class="slide-title">A vector that depends on the sentence</h2>
-    <p class="sub">Newer models give a word a <strong>different vector depending on its sentence</strong>, by reading the words around it. These are <strong>contextual embeddings</strong> (BERT).</p>
+    <p class="sub">Newer models read the surrounding words and give each word a <strong>different vector in each sentence</strong>. These are <strong>contextual embeddings</strong> (BERT).</p>
     <div class="body center">
       <div style="display:flex; flex-direction:column; gap:18px; margin-bottom:28px;">
         <div style="display:flex; align-items:center; gap:30px;">
@@ -544,14 +532,14 @@ layers.<span class="fn">Embedding</span>(<span class="n">20000</span>, <span cla
       </div>
       <p class="col-text" style="font-size:32px;">Reading the <strong>whole sentence at once</strong> to place each word is the seed of today's large language models, and even there, meaning becomes distance still holds.</p>
       <div class="in-practice"><span class="ip-tag">from the paper</span><p class="ip-text">BERT (Devlin et al., 2019)<a class="cite" href="#/references">[8]</a> is "designed to pre-train <strong>deep bidirectional representations</strong> from unlabeled text by jointly conditioning on both left and right context in all layers."</p></div>
-      <p class="note" style="margin-top:18px;">Further reading: <a href="https://jalammar.github.io" target="_blank" rel="noopener" style="color:var(--accent); text-decoration:none;">The Illustrated Word2Vec &amp; Transformer</a><a class="cite" href="#/references">[9]</a></p>
+      <p class="note" style="margin-top:18px;">Further reading: <a href="https://jalammar.github.io" target="_blank" rel="noopener noreferrer" style="color:var(--accent); text-decoration:none;">The Illustrated Word2Vec &amp; Transformer</a><a class="cite" href="#/references">[9]</a></p>
     </div>
   </section>
 
-  <!-- 23 · BEYOND WORDS -->
+  <!-- 23b · BEYOND WORDS -->
   <section data-background-color="#ffffff">
     <h2 class="slide-title">The same method extends beyond words</h2>
-    <p class="sub">The technique, placing items by the company they keep, applies to almost anything. The general name is <strong>entity embeddings</strong>.</p>
+    <p class="sub">Placing items by the company they keep works for almost anything. The general name is <strong>entity embeddings</strong>.</p>
     <div class="body center">
       <div class="cards">
         <div class="card"><div class="card-title" style="margin:0;">Domains</div><div class="card-note">visited by the same infected hosts → sit close.</div></div>
@@ -636,23 +624,23 @@ layers.<span class="fn">Embedding</span>(<span class="n">20000</span>, <span cla
       <div class="refs">
         <div class="ref-col">
           <div class="ref-group">
-            <div class="ref"><span class="ref-n">[1]</span>TensorFlow Embedding Projector. <span class="src"><a href="https://projector.tensorflow.org" target="_blank" rel="noopener">projector.tensorflow.org</a></span></div>
-            <div class="ref"><span class="ref-n">[2]</span>Pennington, Socher &amp; Manning (2014). GloVe: global vectors for word representation. <span class="src"><a href="https://doi.org/10.3115/v1/D14-1162" target="_blank" rel="noopener">EMNLP.</a></span></div>
+            <div class="ref"><span class="ref-n">[1]</span>TensorFlow Embedding Projector. <span class="src"><a href="https://projector.tensorflow.org" target="_blank" rel="noopener noreferrer">projector.tensorflow.org</a></span></div>
+            <div class="ref"><span class="ref-n">[2]</span>Pennington, Socher &amp; Manning (2014). GloVe: global vectors for word representation. <span class="src"><a href="https://doi.org/10.3115/v1/D14-1162" target="_blank" rel="noopener noreferrer">EMNLP.</a></span></div>
             <div class="ref"><span class="ref-n">[3]</span>Firth (1957). A synopsis of linguistic theory. <span class="src">("you know a word by the company it keeps")</span></div>
-            <div class="ref"><span class="ref-n">[4]</span>Mikolov et al. (2013). Efficient estimation of word representations in vector space. <span class="src"><a href="https://arxiv.org/abs/1301.3781" target="_blank" rel="noopener">ICLR (word2vec).</a></span></div>
-            <div class="ref"><span class="ref-n">[5]</span>GloVe pretrained vectors (glove.6B). <span class="src"><a href="https://nlp.stanford.edu/projects/glove/" target="_blank" rel="noopener">nlp.stanford.edu/projects/glove.</a></span></div>
+            <div class="ref"><span class="ref-n">[4]</span>Mikolov et al. (2013). Efficient estimation of word representations in vector space. <span class="src"><a href="https://arxiv.org/abs/1301.3781" target="_blank" rel="noopener noreferrer">ICLR (word2vec).</a></span></div>
+            <div class="ref"><span class="ref-n">[5]</span>GloVe pretrained vectors (glove.6B). <span class="src"><a href="https://nlp.stanford.edu/projects/glove/" target="_blank" rel="noopener noreferrer">nlp.stanford.edu/projects/glove.</a></span></div>
           </div>
         </div>
         <div class="ref-col">
           <div class="ref-group">
-            <div class="ref"><span class="ref-n">[6]</span>TensorFlow / Keras (TextVectorization, Embedding); scikit-learn <span class="src">(<a href="https://jmlr.org/papers/v12/pedregosa11a.html" target="_blank" rel="noopener">Pedregosa et al., 2011</a>).</span></div>
-            <div class="ref"><span class="ref-n">[7]</span>Bojanowski et al. (2017). Enriching word vectors with subword information. <span class="src"><a href="https://doi.org/10.1162/tacl_a_00051" target="_blank" rel="noopener">TACL (fastText).</a></span></div>
-            <div class="ref"><span class="ref-n">[8]</span>Devlin et al. (2019). BERT: pre-training of deep bidirectional transformers. <span class="src"><a href="https://doi.org/10.18653/v1/N19-1423" target="_blank" rel="noopener">NAACL.</a></span></div>
-            <div class="ref"><span class="ref-n">[9]</span>Alammar, "The Illustrated Word2Vec" / "Transformer." <span class="src"><a href="https://jalammar.github.io/" target="_blank" rel="noopener">jalammar.github.io</a></span></div>
+            <div class="ref"><span class="ref-n">[6]</span>TensorFlow / Keras (TextVectorization, Embedding); scikit-learn <span class="src">(<a href="https://jmlr.org/papers/v12/pedregosa11a.html" target="_blank" rel="noopener noreferrer">Pedregosa et al., 2011</a>).</span></div>
+            <div class="ref"><span class="ref-n">[7]</span>Bojanowski et al. (2017). Enriching word vectors with subword information. <span class="src"><a href="https://doi.org/10.1162/tacl_a_00051" target="_blank" rel="noopener noreferrer">TACL (fastText).</a></span></div>
+            <div class="ref"><span class="ref-n">[8]</span>Devlin et al. (2019). BERT: pre-training of deep bidirectional transformers. <span class="src"><a href="https://doi.org/10.18653/v1/N19-1423" target="_blank" rel="noopener noreferrer">NAACL.</a></span></div>
+            <div class="ref"><span class="ref-n">[9]</span>Alammar, "The Illustrated Word2Vec" / "Transformer." <span class="src"><a href="https://jalammar.github.io/" target="_blank" rel="noopener noreferrer">jalammar.github.io</a></span></div>
           </div>
         </div>
       </div>
-      <div class="in-practice" style="margin-top:40px;"><span class="ip-tag">thank you</span><p class="ip-text">These decks are shared freely under <strong>Creative Commons BY-NC-SA 4.0</strong>: keep the credit to Francisco Laplace, keep them non-commercial, and share any adaptations alike. Latest versions at <a href="https://laplacef.github.io/deep-learning-for-cyber/" target="_blank" rel="noopener">laplacef.github.io/deep-learning-for-cyber</a>.</p></div>
+      <div class="in-practice" style="margin-top:40px;"><span class="ip-tag">thank you</span><p class="ip-text">These decks are shared freely under <strong>Creative Commons BY-NC-SA 4.0</strong>: keep the credit to Francisco Laplace, keep them non-commercial, and share any adaptations alike. Latest versions at <a href="https://laplacef.github.io/deep-learning-for-cyber/" target="_blank" rel="noopener noreferrer">laplacef.github.io/deep-learning-for-cyber</a>.</p></div>
     </div>
   </section>
 
