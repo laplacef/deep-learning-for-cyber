@@ -12,6 +12,11 @@
 <style>
   /* Reader-text normalization: one body size across slides. */
   .reveal .col-text { font-size: 32px; }
+  /* Prevent single-word orphan lines in wrapping prose. */
+  .reveal .cover-sub, .reveal .sub, .reveal .divider-sub, .reveal .lead,
+  .reveal .col-text, .reveal .card-note, .reveal .card p, .reveal .note,
+  .reveal .step-note, .reveal .ip-text, .reveal .code-annot p,
+  .reveal .panel p { text-wrap: pretty; }
 </style>
 </head>
 <body>
@@ -24,7 +29,7 @@
       <h1 class="cover-title">How Neural<br>Networks Learn</h1>
       <p class="cover-sub">Loss, gradient descent, and backpropagation, then training a phishing filter in Keras.</p>
     </div>
-    <div class="deck-footer">Deep Learning for Cyber&nbsp;&nbsp;·&nbsp;&nbsp;<a class="name" href="https://laplacef.me" target="_blank" rel="noopener">Francisco Laplace</a></div>
+    <div class="deck-footer">Deep Learning for Cyber&nbsp;&nbsp;·&nbsp;&nbsp;<a class="name" href="https://laplacef.me" target="_blank" rel="noopener noreferrer">Francisco Laplace</a></div>
   </section>
 
   <!-- 02 · AGENDA -->
@@ -32,9 +37,9 @@
     <h2 class="slide-title">What this session covers</h2>
     <div class="body center">
       <ol class="agenda">
-        <li>The loss, one number for how wrong a prediction is</li>
-        <li>Gradient descent, stepping the weights downhill</li>
-        <li>Backpropagation, assigning each weight its share of the error</li>
+        <li>The loss puts a number on how wrong a prediction is</li>
+        <li>Gradient descent steps the weights downhill</li>
+        <li>Backpropagation assigns each weight its share of the error</li>
         <li>Training and evaluating a working filter in Keras</li>
       </ol>
       <p class="note" style="margin-top:36px;">The starting point is a network that can already produce a prediction. The objective here is making that prediction accurate.</p>
@@ -71,7 +76,7 @@
 
   <!-- 04 · WALKING DOWNHILL -->
   <section data-background-color="#ffffff">
-    <h2 class="slide-title">Learning as a descent downhill</h2>
+    <h2 class="slide-title">Learning is a descent</h2>
     <div class="body center">
       <div class="cols gap-lg" style="align-items:center;">
         <p class="col col-text" style="font-size:32px;">Consider the analogue of descending a foggy hill toward the lowest valley. Long range visibility is absent, but the local slope of the ground is felt, and a step is taken downhill. Repeated, the steps reach the bottom.<br><br>The hill is the loss. Each setting of the weights is a position on it, and the height is how wrong the network is. The objective is the <strong>lowest valley.</strong></p>
@@ -85,7 +90,7 @@
 
   <!-- 05 · GRADIENT DESCENT -->
   <section data-background-color="#ffffff">
-    <h2 class="slide-title">Gradient descent, step by step</h2>
+    <h2 class="slide-title">Gradient descent in three steps</h2>
     <p class="sub">Gradient is the technical term for slope, and descent means moving down it.</p>
     <div class="body center">
       <div class="cards">
@@ -130,7 +135,7 @@
 
   <!-- 08 · BACKPROP BIG IDEA -->
   <section data-background-color="#ffffff">
-    <h2 class="slide-title">Backpropagation: sharing the blame</h2>
+    <h2 class="slide-title">Backpropagation shares the blame</h2>
     <div class="body center">
       <p class="lead">Gradient descent requires the slope for <em>every</em> weight, and there are thousands. Backpropagation computes them all at once. Analogous to a coach reviewing a loss, it traces the error backward and assigns each weight its fair share of the blame, so each one knows how to improve.</p>
       <div class="in-practice" style="margin-top:40px;"><span class="ip-tag">from the paper</span><p class="ip-text">The method that revived the field: Rumelhart, Hinton &amp; Williams (1986)<a class="cite" href="#/references">[4]</a> describe a procedure that <strong>repeatedly adjusts the weights so as to minimize the difference between the network's actual output and the desired output</strong>. That one trick is what makes deep networks trainable.</p></div>
@@ -247,7 +252,7 @@ history = model.<span class="fn">fit</span>(
         <div class="code-annot">
           <div><div class="step-eyebrow">optimizer="adam"</div><p>smart gradient descent that tunes the step size for each weight automatically.</p></div>
           <div><div class="step-eyebrow">loss="binary_crossentropy"</div><p>the phishing scoring rule from the loss slide, the surprise measure that punishes confident mistakes. Binary because there are two answers.</p></div>
-          <div><div class="step-eyebrow">fit(...)</div><p>runs our four step loop, over and over.</p></div>
+          <div><div class="step-eyebrow">fit(...)</div><p>runs the four step loop, over and over.</p></div>
           <div><div class="step-eyebrow">validation_split=0.2</div><p>holds back 20% to check honesty on unseen mail.</p></div>
         </div>
       </div>
@@ -276,7 +281,23 @@ score = model.<span class="fn">predict</span>([x])[<span class="n">0</span>][<sp
     </div>
   </section>
 
-  <!-- 16 · RESULTS -->
+  <!-- 16 · DISCUSSION · PREDICT THE CURVES -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">Think it through</h2>
+    <div class="body center">
+      <p class="q-topic">Predict the two curves</p>
+      <p class="col-text" style="font-size:34px; max-width:1520px;">Training has finished 20 epochs, and <span class="code-inline">fit</span> logged the loss after every round: one line for the training emails, one for the held-out validation emails. Before the plot appears: what shape should each line trace, and which of the two decides whether the filter is ready?</p>
+      <div style="display:flex; flex-wrap:wrap; gap:18px; margin-top:38px;">
+        <span class="chip" style="border-radius:999px;">both fall together</span>
+        <span class="chip" style="border-radius:999px;">training falls, validation rises</span>
+        <span class="chip" style="border-radius:999px;">both stay flat</span>
+        <span class="chip" style="border-radius:999px;">validation falls faster than training</span>
+      </div>
+      <p class="lead" style="font-size:30px; color:var(--ink); margin-top:44px;"><strong>Reason from the split.</strong> One grade is earned on emails the network studied, the other on emails it has never seen. Only one of them can expose memorization. The next slide draws both lines.</p>
+    </div>
+  </section>
+
+  <!-- 17 · RESULTS -->
   <section data-background-color="#ffffff">
     <h2 class="slide-title">Whether the network actually learned</h2>
     <div class="body center">
@@ -294,7 +315,7 @@ score = model.<span class="fn">predict</span>([x])[<span class="n">0</span>][<sp
     </div>
   </section>
 
-  <!-- 17 · GLOSSARY -->
+  <!-- 18 · GLOSSARY -->
   <section data-background-color="#ffffff">
     <h2 class="slide-title">Key terms</h2>
     <div class="body center">
@@ -314,7 +335,7 @@ score = model.<span class="fn">predict</span>([x])[<span class="n">0</span>][<sp
     </div>
   </section>
 
-  <!-- 18 · RECAP -->
+  <!-- 19 · RECAP -->
   <section data-background-color="#ffffff">
     <h2 class="slide-title">The core ideas</h2>
     <div class="body center">
@@ -327,26 +348,26 @@ score = model.<span class="fn">predict</span>([x])[<span class="n">0</span>][<sp
     </div>
   </section>
 
-  <!-- 19 · REFERENCES -->
+  <!-- 20 · REFERENCES -->
   <section id="references" data-background-color="#ffffff">
     <h2 class="slide-title">References and where to go deeper</h2>
     <div class="body center">
       <div class="refs">
         <div class="ref-col">
           <div class="ref-group">
-            <div class="ref"><span class="ref-n">[1]</span>Robbins &amp; Monro (1951). A stochastic approximation method. <span class="src"><a href="https://doi.org/10.1214/aoms/1177729586" target="_blank" rel="noopener">Ann. Math. Statist. 22(3).</a></span></div>
-            <div class="ref"><span class="ref-n">[2]</span>Kingma &amp; Ba (2015). Adam: a method for stochastic optimization. <span class="src"><a href="https://doi.org/10.48550/arXiv.1412.6980" target="_blank" rel="noopener">ICLR.</a></span></div>
-            <div class="ref"><span class="ref-n">[3]</span>LeCun, Bottou, Orr &amp; Müller (1998). Efficient BackProp. <span class="src"><a href="https://doi.org/10.1007/3-540-49430-8_2" target="_blank" rel="noopener">Neural Networks: Tricks of the Trade.</a></span></div>
+            <div class="ref"><span class="ref-n">[1]</span>Robbins &amp; Monro (1951). A stochastic approximation method. <span class="src"><a href="https://doi.org/10.1214/aoms/1177729586" target="_blank" rel="noopener noreferrer">Ann. Math. Statist. 22(3).</a></span></div>
+            <div class="ref"><span class="ref-n">[2]</span>Kingma &amp; Ba (2015). Adam: a method for stochastic optimization. <span class="src"><a href="https://doi.org/10.48550/arXiv.1412.6980" target="_blank" rel="noopener noreferrer">ICLR.</a></span></div>
+            <div class="ref"><span class="ref-n">[3]</span>LeCun, Bottou, Orr &amp; Müller (1998). Efficient BackProp. <span class="src"><a href="https://doi.org/10.1007/3-540-49430-8_2" target="_blank" rel="noopener noreferrer">Neural Networks: Tricks of the Trade.</a></span></div>
           </div>
         </div>
         <div class="ref-col">
           <div class="ref-group">
-            <div class="ref"><span class="ref-n">[4]</span>Rumelhart, Hinton &amp; Williams (1986). Learning representations by back-propagating errors. <span class="src"><a href="https://doi.org/10.1038/323533a0" target="_blank" rel="noopener">Nature 323.</a></span></div>
-            <div class="ref"><span class="ref-n">[5]</span>TensorFlow / Keras; scikit-learn <span class="src">(<a href="https://jmlr.org/papers/v12/pedregosa11a.html" target="_blank" rel="noopener">Pedregosa et al., 2011, JMLR</a>).</span></div>
+            <div class="ref"><span class="ref-n">[4]</span>Rumelhart, Hinton &amp; Williams (1986). Learning representations by back-propagating errors. <span class="src"><a href="https://doi.org/10.1038/323533a0" target="_blank" rel="noopener noreferrer">Nature 323.</a></span></div>
+            <div class="ref"><span class="ref-n">[5]</span>TensorFlow / Keras; scikit-learn <span class="src">(<a href="https://jmlr.org/papers/v12/pedregosa11a.html" target="_blank" rel="noopener noreferrer">Pedregosa et al., 2011, JMLR</a>).</span></div>
           </div>
         </div>
       </div>
-      <div class="in-practice" style="margin-top:40px;"><span class="ip-tag">thank you</span><p class="ip-text">These decks are shared freely under <strong>Creative Commons BY-NC-SA 4.0</strong>: keep the credit to Francisco Laplace, keep them non-commercial, and share any adaptations alike. Latest versions at <a href="https://laplacef.github.io/deep-learning-for-cyber/" target="_blank" rel="noopener">laplacef.github.io/deep-learning-for-cyber</a>.</p></div>
+      <div class="in-practice" style="margin-top:40px;"><span class="ip-tag">thank you</span><p class="ip-text">These decks are shared freely under <strong>Creative Commons BY-NC-SA 4.0</strong>: keep the credit to Francisco Laplace, keep them non-commercial, and share any adaptations alike. Latest versions at <a href="https://laplacef.github.io/deep-learning-for-cyber/" target="_blank" rel="noopener noreferrer">laplacef.github.io/deep-learning-for-cyber</a>.</p></div>
     </div>
   </section>
 
