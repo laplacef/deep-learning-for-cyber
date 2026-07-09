@@ -13,6 +13,10 @@
   /* Deck-01 reader-text normalization: one body size across slides.
      Emphasis comes from weight/color/callouts, not size changes. */
   .reveal .col-text { font-size: 32px; }
+  /* Prevent single-word orphan lines in wrapping prose. */
+  .reveal .cover-sub, .reveal .sub, .reveal .divider-sub, .reveal .lead,
+  .reveal .col-text, .reveal .card-note, .reveal .card p, .reveal .note,
+  .reveal .step-note, .reveal .ip-text, .reveal .code-annot p { text-wrap: pretty; }
 </style>
 </head>
 <body>
@@ -25,7 +29,7 @@
       <h1 class="cover-title">Neural<br>Networks</h1>
       <p class="cover-sub">From a single neuron to a complete network that scores a phishing email, traced through the forward pass without heavy mathematics.</p>
     </div>
-    <div class="deck-footer">Deep Learning for Cyber&nbsp;&nbsp;·&nbsp;&nbsp;<a class="name" href="https://laplacef.me" target="_blank" rel="noopener">Francisco Laplace</a></div>
+    <div class="deck-footer">Deep Learning for Cyber&nbsp;&nbsp;·&nbsp;&nbsp;<a class="name" href="https://laplacef.me" target="_blank" rel="noopener noreferrer">Francisco Laplace</a></div>
   </section>
 
   <!-- 02 · AGENDA -->
@@ -33,9 +37,9 @@
     <h2 class="slide-title">What this session covers</h2>
     <div class="body center">
       <ol class="agenda">
-        <li>The problem, and why fixed rules fail to generalize</li>
-        <li>The neuron, weighting features into one decision</li>
-        <li>The network, many neurons composed together</li>
+        <li>Why fixed rules fail to generalize</li>
+        <li>The neuron weights features into one decision</li>
+        <li>The network composes many neurons together</li>
         <li>How a trained network scores an email from input to output</li>
       </ol>
     </div>
@@ -71,7 +75,7 @@
 
   <!-- 04 · WHY LEARN THE RULES -->
   <section data-background-color="#ffffff">
-    <h2 class="slide-title">Why the rules are learned, not written</h2>
+    <h2 class="slide-title">Why the rules are learned rather than written</h2>
     <div class="body center">
       <div class="cols">
         <div class="col">
@@ -120,13 +124,13 @@
         <div class="card"><div class="card-eyebrow">…x₂₀</div><div class="card-title">and more</div><div class="card-note">attachments, time sent…</div></div>
       </div>
       <p style="font:500 28px var(--mono); color:var(--ink); margin-top:50px;">one email&nbsp;&nbsp;→&nbsp;&nbsp;<span style="color:var(--accent);">[ 3, 7, 1, … ]</span>&nbsp;&nbsp;a vector of numbers</p>
-      <div class="in-practice sec"><span class="ip-tag">security</span><p class="ip-text">Feature engineering is where security expertise pays off: the strongest features are the ones an attacker <strong>cannot cheaply fake</strong>. Choosing them is a threat-modeling judgment, not a math one.</p></div>
+      <div class="in-practice sec"><span class="ip-tag">security</span><p class="ip-text">Feature engineering is where security expertise pays off: the strongest features are the ones an attacker <strong>cannot cheaply fake</strong>. Choosing them is a threat-modeling judgment more than a math one.</p></div>
     </div>
   </section>
 
   <!-- 07 · FEATURES IN CODE -->
   <section data-background-color="#ffffff">
-    <h2 class="slide-title">The same idea, in code</h2>
+    <h2 class="slide-title">The same idea in code</h2>
     <p class="sub">One email in, a vector of numbers out. No learning yet, only counting.</p>
     <div class="body center">
       <div class="code-row">
@@ -203,7 +207,7 @@ x = <span class="fn">email_to_features</span>(msg)   <span class="c"># [3, 7, 1,
         <div class="mc last">Past a threshold it fires a pulse, otherwise stays quiet</div>
         <div class="mc r last">The activation, turning the total into an output</div>
       </div>
-      <p class="note" style="margin-top:38px;">A biological brain contains roughly <strong class="ink">86 billion</strong><a class="cite" href="#/references">[3]</a> neurons. The artificial version is far simpler: it borrows the structure of the idea, not the biology.<a class="cite" href="#/references">[4]</a></p>
+      <p class="note" style="margin-top:38px;">A biological brain contains roughly <strong class="ink">86 billion</strong><a class="cite" href="#/references">[3]</a> neurons. The artificial version is far simpler: it borrows the structure of the idea and none of the biology.<a class="cite" href="#/references">[4]</a></p>
     </div>
   </section>
 
@@ -290,7 +294,7 @@ x = <span class="fn">email_to_features</span>(msg)   <span class="c"># [3, 7, 1,
         <div class="col"><div class="annot-head red">plus b</div><p>the bias, the baseline added to the sum</p></div>
         <div class="col"><div class="annot-head ink">equals z</div><p>one number, the total evidence so far</p></div>
       </div>
-      <p class="note" style="margin-top:50px;">No calculus is involved, only multiplication and addition.</p>
+      <p class="note" style="margin-top:50px;">Multiplication and addition are all it takes; no calculus is involved.</p>
       <div class="in-practice"><span class="ip-tag">in practice</span><p class="ip-text">In practice <strong>z</strong> is never computed by hand; the framework does it. But recognizing it as \( w \cdot x + b \) is what lets one debug a model that returns nearly the same score for every email.</p></div>
     </div>
   </section>
@@ -369,7 +373,7 @@ x = <span class="fn">email_to_features</span>(msg)   <span class="c"># [3, 7, 1,
 
   <!-- 19 · THREE ACTIVATIONS, TWO JOBS -->
   <section data-background-color="#ffffff">
-    <h2 class="slide-title">Three activations, two jobs</h2>
+    <h2 class="slide-title">Three activations for two jobs</h2>
     <p class="sub">The location of a function in the network determines which one is used.</p>
     <div class="body center">
       <div class="cards">
@@ -378,7 +382,7 @@ x = <span class="fn">email_to_features</span>(msg)   <span class="c"># [3, 7, 1,
         <div class="card"><div class="card-eyebrow">output · multiclass</div><div class="card-title">Softmax</div><div class="card-note">maps more than two classes to percentages that sum to 100%.</div></div>
       </div>
       <p class="note" style="margin-top:40px;">ReLU provides the bend in the hidden layers. Sigmoid and softmax shape the output, selected by the number of classes: two is <strong>binary</strong>, more is <strong>multiclass</strong>.</p>
-      <p class="note" style="margin-top:18px; color:var(--muted2);">These three are the common choices, not the full set. Others such as tanh, Leaky ReLU, and GELU each vary the same idea of bending or compressing a number.</p>
+      <p class="note" style="margin-top:18px; color:var(--muted2);">These three are the most common choices; others such as tanh, Leaky ReLU, and GELU each vary the same idea of bending or compressing a number.</p>
     </div>
   </section>
 
@@ -423,7 +427,7 @@ x = <span class="fn">email_to_features</span>(msg)   <span class="c"># [3, 7, 1,
 
   <!-- 21 · SIGMOID DEEP DIVE -->
   <section data-background-color="#ffffff">
-    <h2 class="slide-title">Sigmoid, the binary score</h2>
+    <h2 class="slide-title">Sigmoid gives the binary score</h2>
     <p class="sub">For exactly two classes, a single sigmoid neuron at the output suffices.</p>
     <div class="body">
       <div class="cols gap-lg" style="align-items:center;">
@@ -556,6 +560,22 @@ x = <span class="fn">email_to_features</span>(msg)   <span class="c"># [3, 7, 1,
     </div>
   </section>
 
+  <!-- 23a · DISCUSSION · PREDICT THE VERDICT -->
+  <section data-background-color="#ffffff">
+    <h2 class="slide-title">Think it through</h2>
+    <div class="body center">
+      <p class="q-topic">Predict the verdict</p>
+      <p class="col-text" style="font-size:34px; max-width:1520px;">An email carries a <strong>bad link</strong> and an <strong>urgent tone</strong>, and the sender is unknown. It enters a small trained network with two hidden neurons: one weights the link and the urgency strongly, the other listens mostly for a <strong>trusted sender</strong>. Two questions: which hidden neuron fires, and does the final score lean toward phishing or legitimate?</p>
+      <div style="display:flex; flex-wrap:wrap; gap:18px; margin-top:38px;">
+        <span class="chip" style="border-radius:999px;">the link and urgency neuron</span>
+        <span class="chip" style="border-radius:999px;">the trusted sender neuron</span>
+        <span class="chip" style="border-radius:999px;">both</span>
+        <span class="chip" style="border-radius:999px;">neither</span>
+      </div>
+      <p class="lead" style="font-size:30px; color:var(--ink); margin-top:44px;"><strong>Reason from the weights.</strong> A neuron fires when its weighted evidence clears its bias, and ReLU silences any total that lands below zero. The next slide runs the exact numbers.</p>
+    </div>
+  </section>
+
   <!-- 23b · LAYER MATH DEMO -->
   <style>
     .lm { display:flex; flex-direction:row; align-items:center; justify-content:space-between; gap:12px; width:100%; }
@@ -581,7 +601,7 @@ x = <span class="fn">email_to_features</span>(msg)   <span class="c"># [3, 7, 1,
     .lm-arrow .nt b { color:var(--ink); }
   </style>
   <section data-background-color="#ffffff">
-    <h2 class="slide-title">The same network, with the numbers</h2>
+    <h2 class="slide-title">The same network in numbers</h2>
     <p class="sub">Three features in, two hidden neurons, one output.</p>
     <div class="body center">
       <div class="lm">
@@ -609,7 +629,7 @@ x = <span class="fn">email_to_features</span>(msg)   <span class="c"># [3, 7, 1,
           </div>
         </div>
 
-        <div class="lm-arrow"><span class="ar">→</span><span class="nt">now <b>1.5</b> and <b>0.0</b>, not the features</span></div>
+        <div class="lm-arrow"><span class="ar">→</span><span class="nt">now <b>1.5</b> and <b>0.0</b>, no longer the features</span></div>
 
         <div class="lm-col">
           <div class="lm-head"><b>output · sigmoid</b><small>uses the hidden layer's outputs</small></div>
@@ -622,7 +642,7 @@ x = <span class="fn">email_to_features</span>(msg)   <span class="c"># [3, 7, 1,
         </div>
 
       </div>
-      <div class="in-practice"><span class="ip-tag">in practice</span><p class="ip-text">This hand off is the essence of depth: <strong>one layer's outputs are the next layer's inputs</strong>. The output neuron never sees the raw email, only the hidden layer's transformation of it.</p></div>
+      <div class="in-practice"><span class="ip-tag">in practice</span><p class="ip-text">This handoff is the essence of depth: <strong>one layer's outputs are the next layer's inputs</strong>. The output neuron never sees the raw email, only the hidden layer's transformation of it.</p></div>
     </div>
   </section>
 
@@ -652,7 +672,7 @@ x = <span class="fn">email_to_features</span>(msg)   <span class="c"># [3, 7, 1,
     <h2 class="slide-title">Experiment with a network</h2>
     <p class="sub">A complete neural network that trains in the browser, with the decision boundary drawn live as it learns. No setup or installation required.</p>
     <div class="body center">
-      <p class="note" style="margin-bottom:40px;">Explore: <a href="https://playground.tensorflow.org" target="_blank" rel="noopener" style="color:var(--accent); text-decoration:none;">playground.tensorflow.org</a><a class="cite" href="#/references">[11]</a></p>
+      <p class="note" style="margin-bottom:40px;">Explore: <a href="https://playground.tensorflow.org" target="_blank" rel="noopener noreferrer" style="color:var(--accent); text-decoration:none;">playground.tensorflow.org</a><a class="cite" href="#/references">[11]</a></p>
       <div class="cards" style="gap:22px;">
         <div class="step-card"><div class="step-name" style="margin-top:0;">Add a hidden layer</div><p class="step-note">observe the boundary bend around the harder shapes.</p></div>
         <div class="step-card"><div class="step-name" style="margin-top:0;">Set activation to linear</div><p class="step-note">it fails on the spiral, demonstrating why a bend is needed.</p></div>
@@ -672,7 +692,7 @@ x = <span class="fn">email_to_features</span>(msg)   <span class="c"># [3, 7, 1,
         <div class="stat"><div class="stat-num accent">8</div><div class="stat-label">hidden, ReLU</div><div class="stat-sub">richer combinations</div></div>
         <div class="stat dark"><div class="stat-num">1</div><div class="stat-label">output, sigmoid</div><div class="stat-sub">the phishing score</div></div>
       </div>
-      <div class="in-practice"><span class="ip-tag">in practice</span><p class="ip-text">These layer sizes are <strong>design choices, not fixed rules</strong>. They should be justified: larger networks need more data and overfit faster, so begin small and grow only if validation supports it.</p></div>
+      <div class="in-practice"><span class="ip-tag">in practice</span><p class="ip-text">These layer sizes are <strong>design choices rather than fixed rules</strong>. They should be justified: larger networks need more data and overfit faster, so begin small and grow only if validation supports it.</p></div>
     </div>
   </section>
 
@@ -732,25 +752,25 @@ x = <span class="fn">email_to_features</span>(msg)   <span class="c"># [3, 7, 1,
       <div class="refs">
         <div class="ref-col">
           <div class="ref-group">
-            <div class="ref"><span class="ref-n">[1]</span>Nazario. Phishing corpus. <span class="src"><a href="https://monkey.org/~jose/phishing/" target="_blank" rel="noopener">monkey.org/~jose/phishing</a></span></div>
-            <div class="ref"><span class="ref-n">[2]</span>Klimt &amp; Yang (2004). The Enron corpus. <span class="src">ECML. <a href="https://www.cs.cmu.edu/~enron/" target="_blank" rel="noopener">cs.cmu.edu/~enron</a></span></div>
-            <div class="ref"><span class="ref-n">[3]</span>Azevedo et al. (2009). Equal numbers of neuronal and nonneuronal cells in the human brain. <span class="src"><a href="https://doi.org/10.1002/cne.21974" target="_blank" rel="noopener">J. Comparative Neurology 513(5).</a></span></div>
-            <div class="ref"><span class="ref-n">[4]</span>McCulloch &amp; Pitts (1943). A logical calculus of the ideas immanent in nervous activity. <span class="src"><a href="https://doi.org/10.1007/BF02478259" target="_blank" rel="noopener">Bull. Math. Biophysics 5.</a></span></div>
-            <div class="ref"><span class="ref-n">[5]</span>Rosenblatt (1958). The perceptron. <span class="src"><a href="https://doi.org/10.1037/h0042519" target="_blank" rel="noopener">Psychological Review 65(6).</a></span></div>
-            <div class="ref"><span class="ref-n">[6]</span>Minsky &amp; Papert (1969). Perceptrons. <span class="src"><a href="https://doi.org/10.7551/mitpress/11301.001.0001" target="_blank" rel="noopener">MIT Press.</a></span></div>
-            <div class="ref"><span class="ref-n">[7]</span>Rumelhart, Hinton &amp; Williams (1986). Learning representations by back-propagating errors. <span class="src"><a href="https://doi.org/10.1038/323533a0" target="_blank" rel="noopener">Nature 323.</a></span></div>
+            <div class="ref"><span class="ref-n">[1]</span>Nazario. Phishing corpus. <span class="src"><a href="https://monkey.org/~jose/phishing/" target="_blank" rel="noopener noreferrer">monkey.org/~jose/phishing</a></span></div>
+            <div class="ref"><span class="ref-n">[2]</span>Klimt &amp; Yang (2004). The Enron corpus. <span class="src">ECML. <a href="https://www.cs.cmu.edu/~enron/" target="_blank" rel="noopener noreferrer">cs.cmu.edu/~enron</a></span></div>
+            <div class="ref"><span class="ref-n">[3]</span>Azevedo et al. (2009). Equal numbers of neuronal and nonneuronal cells in the human brain. <span class="src"><a href="https://doi.org/10.1002/cne.21974" target="_blank" rel="noopener noreferrer">J. Comparative Neurology 513(5).</a></span></div>
+            <div class="ref"><span class="ref-n">[4]</span>McCulloch &amp; Pitts (1943). A logical calculus of the ideas immanent in nervous activity. <span class="src"><a href="https://doi.org/10.1007/BF02478259" target="_blank" rel="noopener noreferrer">Bull. Math. Biophysics 5.</a></span></div>
+            <div class="ref"><span class="ref-n">[5]</span>Rosenblatt (1958). The perceptron. <span class="src"><a href="https://doi.org/10.1037/h0042519" target="_blank" rel="noopener noreferrer">Psychological Review 65(6).</a></span></div>
+            <div class="ref"><span class="ref-n">[6]</span>Minsky &amp; Papert (1969). Perceptrons. <span class="src"><a href="https://doi.org/10.7551/mitpress/11301.001.0001" target="_blank" rel="noopener noreferrer">MIT Press.</a></span></div>
+            <div class="ref"><span class="ref-n">[7]</span>Rumelhart, Hinton &amp; Williams (1986). Learning representations by back-propagating errors. <span class="src"><a href="https://doi.org/10.1038/323533a0" target="_blank" rel="noopener noreferrer">Nature 323.</a></span></div>
           </div>
         </div>
         <div class="ref-col">
           <div class="ref-group">
-            <div class="ref"><span class="ref-n">[8]</span>Krizhevsky, Sutskever &amp; Hinton (2012). ImageNet classification with deep CNNs. <span class="src"><a href="https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks" target="_blank" rel="noopener">NeurIPS.</a></span></div>
-            <div class="ref"><span class="ref-n">[9]</span>Cybenko (1989). Approximation by superpositions of a sigmoidal function. <span class="src"><a href="https://doi.org/10.1007/BF02551274" target="_blank" rel="noopener">Math. Control Signals Systems 2(4).</a></span></div>
-            <div class="ref"><span class="ref-n">[10]</span>Glorot, Bordes &amp; Bengio (2011). Deep sparse rectifier neural networks. <span class="src"><a href="https://proceedings.mlr.press/v15/glorot11a.html" target="_blank" rel="noopener">AISTATS.</a></span></div>
-            <div class="ref"><span class="ref-n">[11]</span>TensorFlow Playground. <span class="src"><a href="https://playground.tensorflow.org" target="_blank" rel="noopener">playground.tensorflow.org</a></span></div>
+            <div class="ref"><span class="ref-n">[8]</span>Krizhevsky, Sutskever &amp; Hinton (2012). ImageNet classification with deep CNNs. <span class="src"><a href="https://papers.nips.cc/paper/4824-imagenet-classification-with-deep-convolutional-neural-networks" target="_blank" rel="noopener noreferrer">NeurIPS.</a></span></div>
+            <div class="ref"><span class="ref-n">[9]</span>Cybenko (1989). Approximation by superpositions of a sigmoidal function. <span class="src"><a href="https://doi.org/10.1007/BF02551274" target="_blank" rel="noopener noreferrer">Math. Control Signals Systems 2(4).</a></span></div>
+            <div class="ref"><span class="ref-n">[10]</span>Glorot, Bordes &amp; Bengio (2011). Deep sparse rectifier neural networks. <span class="src"><a href="https://proceedings.mlr.press/v15/glorot11a.html" target="_blank" rel="noopener noreferrer">AISTATS.</a></span></div>
+            <div class="ref"><span class="ref-n">[11]</span>TensorFlow Playground. <span class="src"><a href="https://playground.tensorflow.org" target="_blank" rel="noopener noreferrer">playground.tensorflow.org</a></span></div>
           </div>
         </div>
       </div>
-      <div class="in-practice" style="margin-top:40px;"><span class="ip-tag">thank you</span><p class="ip-text">These decks are shared freely under <strong>Creative Commons BY-NC-SA 4.0</strong>: keep the credit to Francisco Laplace, keep them non-commercial, and share any adaptations alike. Latest versions at <a href="https://laplacef.github.io/deep-learning-for-cyber/" target="_blank" rel="noopener">laplacef.github.io/deep-learning-for-cyber</a>.</p></div>
+      <div class="in-practice" style="margin-top:40px;"><span class="ip-tag">thank you</span><p class="ip-text">These decks are shared freely under <strong>Creative Commons BY-NC-SA 4.0</strong>: keep the credit to Francisco Laplace, keep them non-commercial, and share any adaptations alike. Latest versions at <a href="https://laplacef.github.io/deep-learning-for-cyber/" target="_blank" rel="noopener noreferrer">laplacef.github.io/deep-learning-for-cyber</a>.</p></div>
     </div>
   </section>
 
