@@ -15,8 +15,10 @@
   /* Deck-01 reader-text normalization: one body size across slides.
      Emphasis comes from weight/color/callouts, not size changes. */
   .reveal .col-text { font-size: 32px; }
-  /* Subtitles balance across their lines (avoids the reflow text-wrap:pretty can cause). */
-  .reveal .sub { text-wrap: balance; }
+  /* Subtitles wrap greedily so every line fills to the same right margin (uniform across slides). */
+  .reveal .sub { text-wrap: wrap; }
+  /* Running-prose "where" clause under a display formula (math-typography convention). */
+  .reveal .eqprose { font: 400 25px/1.55 var(--sans); color: var(--body); max-width: 1040px; margin: 16px auto 0; text-align: left; }
   /* Prevent single-word orphan lines in wrapping prose. */
   .reveal .cover-sub, .reveal .divider-sub, .reveal .lead,
   .reveal .col-text, .reveal .card-note, .reveal .card p, .reveal .note,
@@ -119,7 +121,7 @@
   <!-- 06 · EMAIL TO NUMBERS -->
   <section data-background-color="#ffffff">
     <h2 class="slide-title">Turning an email into numbers</h2>
-    <p class="sub">A model cannot read text directly, so each email is first described by a short list of numbers, its <strong>features</strong>.</p>
+    <p class="sub">A model cannot read text directly, so each email is first described by a short list of numbers called its <strong>features</strong>.</p>
     <div class="body center">
       <div class="cards">
         <div class="card"><div class="card-eyebrow">x₁</div><div class="card-title">Unusual links</div><div class="card-note">count of unusual web addresses</div></div>
@@ -290,23 +292,18 @@ x = <span class="fn">email_to_features</span>(msg)   <span class="c"># [3, 7, 1,
   <!-- 16 · WEIGHTED SUM -->
   <section data-background-color="#ffffff">
     <h2 class="slide-title">Adding up the evidence</h2>
-    <p class="sub">Each feature is multiplied by its weight, the products are summed, and the bias is added.</p>
+    <p class="sub">Each feature is multiplied by its weight, the products are summed, and the bias is added to reach the total.</p>
     <div class="body center">
-      <div style="font-size:56px; color:var(--ink); text-align:center; margin:0;">\[ z = w_1 x_1 + w_2 x_2 + \cdots + w_n x_n + b \]</div>
-      <div class="annots" style="margin-top:56px;">
-        <div class="col"><div class="annot-head">the w x part</div><p>each feature times its weight, summed across all features</p></div>
-        <div class="col"><div class="annot-head red">plus b</div><p>the bias, the baseline added to the sum</p></div>
-        <div class="col"><div class="annot-head ink">equals z</div><p>one number, the total evidence so far</p></div>
-      </div>
-      <p class="note" style="margin-top:50px;">Multiplication and addition are all it takes; no calculus is involved.</p>
-      <div class="in-practice"><span class="ip-tag">in practice</span><p class="ip-text">In practice <strong>z</strong> is never computed by hand; the framework does it. But recognizing it as \( w \cdot x + b \) is what lets one debug a model that returns nearly the same score for every email.</p></div>
+      <div style="font-size:56px; color:var(--ink); text-align:center; margin:0;">\[ z = w_1 x_1 + w_2 x_2 + \cdots + w_n x_n + b, \]</div>
+      <p class="eqprose" style="text-align:center; max-width:1240px; margin-top:34px;">where each \( w_i x_i \) is a feature times its weight, the products summed across all features, \( b \) the bias added to that sum, and \( z \) the single total that results.</p>
+      <div class="in-practice"><span class="ip-tag">in practice</span><p class="ip-text">In practice <strong>z</strong> is never computed by hand; the framework does it. But recognizing it as \( \mathbf{w}\cdot\mathbf{x} + b \) is what lets one debug a model that returns nearly the same score for every email.</p></div>
     </div>
   </section>
 
   <!-- 17 · WHAT ACTIVATION IS -->
   <section data-background-color="#ffffff">
     <h2 class="slide-title">What an activation function is</h2>
-    <p class="sub">After summation the neuron holds a single number, the total <span class="code-inline">z</span>. The activation function reshapes it into a bounded form.</p>
+    <p class="sub">After summation the neuron holds a single number <span class="code-inline">z</span>. The activation function reshapes it into a bounded form.</p>
     <div class="body center">
       <div class="cols gap-lg" style="align-items:center;">
         <div class="col">
@@ -385,8 +382,7 @@ x = <span class="fn">email_to_features</span>(msg)   <span class="c"># [3, 7, 1,
         <div class="card"><div class="card-eyebrow">output · binary</div><div class="card-title">Sigmoid</div><div class="card-note">maps two classes to a single 0 to 1 probability, as in the phishing score.</div></div>
         <div class="card"><div class="card-eyebrow">output · multiclass</div><div class="card-title">Softmax</div><div class="card-note">maps more than two classes to percentages that sum to 100%.</div></div>
       </div>
-      <p class="note" style="margin-top:40px;">ReLU provides the bend in the hidden layers. Sigmoid and softmax shape the output, selected by the number of classes: two is <strong>binary</strong>, more is <strong>multiclass</strong>.</p>
-      <p class="note" style="margin-top:18px; color:var(--muted2);">These three are the most common choices; others such as tanh, Leaky ReLU, and GELU each vary the same idea of bending or compressing a number.</p>
+      <p class="note" style="margin-top:40px; color:var(--muted2);">These three are the most common choices; others such as tanh, Leaky ReLU, and GELU each vary the same idea of bending or compressing a number.</p>
     </div>
   </section>
 
@@ -558,7 +554,7 @@ x = <span class="fn">email_to_features</span>(msg)   <span class="c"># [3, 7, 1,
   <!-- 23 · LAYERS (animated) -->
   <section data-background-color="#ffffff">
     <h2 class="slide-title">Stacking neurons into layers</h2>
-    <p class="sub">Feedforward means information flows in one direction, from input to output, with no loops.</p>
+    <p class="sub">Feedforward means information flows in one direction, from the input to the output, never looping back.</p>
     <div class="body">
       <div class="stage"><network-flow></network-flow></div>
     </div>
@@ -653,7 +649,7 @@ x = <span class="fn">email_to_features</span>(msg)   <span class="c"># [3, 7, 1,
   <!-- 24 · HIDDEN LAYERS -->
   <section data-background-color="#ffffff">
     <h2 class="slide-title">What the hidden layers do</h2>
-    <p class="sub">Each layer builds on the previous one, composing simple patterns into higher level ones.</p>
+    <p class="sub">Each layer builds on the previous one, composing simple patterns into progressively higher level ones.</p>
     <div class="body center">
       <div class="flow">
         <div class="step-card surface"><div class="step-eyebrow muted">what goes in</div><div class="step-name">Raw features</div><div class="step-note">links, urgency, sender, and more numbers</div></div>
@@ -751,7 +747,7 @@ x = <span class="fn">email_to_features</span>(msg)   <span class="c"># [3, 7, 1,
 
   <!-- 30 · REFERENCES -->
   <section id="references" data-background-color="#ffffff">
-    <h2 class="slide-title">References and where to go deeper</h2>
+    <h2 class="slide-title">References</h2>
     <div class="body center">
       <div class="refs">
         <div class="ref-col">

@@ -14,8 +14,10 @@
 <style>
   /* Reader-text normalization: one body size across slides. */
   .reveal .col-text { font-size: 32px; }
-  /* Subtitles balance across their lines (avoids the reflow text-wrap:pretty can cause). */
-  .reveal .sub { text-wrap: balance; }
+  /* Subtitles wrap greedily so every line fills to the same right margin (uniform across slides). */
+  .reveal .sub { text-wrap: wrap; }
+  /* Running-prose "where" clause under a display formula (math-typography convention). */
+  .reveal .eqprose { font: 400 25px/1.55 var(--sans); color: var(--body); max-width: 1040px; margin: 16px auto 0; text-align: left; }
   /* Prevent single-word orphan lines in wrapping prose. */
   .reveal .cover-sub, .reveal .divider-sub, .reveal .lead,
   .reveal .col-text, .reveal .card-note, .reveal .card p, .reveal .note,
@@ -59,7 +61,7 @@
     <h2 class="slide-title">It trained, and still does not work</h2>
     <div class="body center">
       <div class="cols gap-lg" style="align-items:center;">
-        <p class="col col-text" style="font-size:32px;">The network is built, training is run, and the accuracy climbs to <strong>99%</strong>.<br><br>Yet it misses nearly every real phishing email. The loss fell, but the model learned the wrong lesson. This session concerns the gap between <strong>a model that trains</strong> and <strong>a model that works</strong>.</p>
+        <p class="col col-text" style="font-size:32px;">Suppose we build the network, run training, and watch accuracy climb to <strong>99%</strong>.<br><br>Yet it misses nearly every real phishing email. The loss fell, but the model learned the wrong lesson. This session concerns the gap between <strong>a model that trains</strong> and <strong>a model that works</strong>.</p>
         <div class="col" style="display:flex; flex-direction:column; gap:20px;">
           <div class="card tint-red"><div style="font:600 32px var(--sans); color:var(--red);">Memorized the training set</div><p style="font:400 26px/1.45 var(--sans); color:var(--body); margin:10px 0 0;">excels on practice, fails on fresh mail</p></div>
           <div class="card tint-red"><div style="font:600 32px var(--sans); color:var(--red);">Learned to always answer safe</div><p style="font:400 26px/1.45 var(--sans); color:var(--body); margin:10px 0 0;">because phishing is rare, that alone scores 99%</p></div>
@@ -88,7 +90,7 @@
             <span><i style="background:var(--red);"></i> validation</span>
           </div>
         </div>
-        <p class="col col-text" style="font-size:32px;">When the training loss keeps falling but the <strong style="color:var(--red);">validation loss flattens out above it</strong>, that gap is the network memorizing the exact training emails instead of the pattern.<br><br>The analogue is a student who memorized the answer key: perfect on the practice test, lost on the real exam. The gap between the two lines is the signal.</p>
+        <p class="col col-text" style="font-size:32px;">When the training loss keeps falling but the <strong style="color:var(--red);">validation loss flattens above it</strong>, that gap is the network memorizing the exact training emails rather than the pattern.<br><br>The analogue is a student who memorized the answer key: flawless on the practice test, lost on the real exam.</p>
       </div>
       <div class="in-practice"><span class="ip-tag">security</span><p class="ip-text">An overfit filter clings to last month's phishing wording. The moment attackers rephrase, it collapses, so generalization is itself a <strong>security property</strong>.</p></div>
     </div>
@@ -105,7 +107,7 @@
 <pre class="code">keras.layers.<span class="fn">Dense</span>(<span class="n">16</span>, activation=<span class="s">"relu"</span>),
 keras.layers.<span class="fn">Dropout</span>(<span class="n">0.3</span>),   <span class="c"># drop 30% each pass</span>
 keras.layers.<span class="fn">Dense</span>(<span class="n">8</span>,  activation=<span class="s">"relu"</span>),</pre>
-          <p class="col-text" style="font-size:30px; margin-top:24px;">The analogue is a team that rehearses with random members sitting out. No one becomes irreplaceable, so the group stays robust when any one is absent.</p>
+          <p class="col-text" style="font-size:30px; margin-top:24px;">The analogue is a team that rehearses with random members sitting out. No one becomes irreplaceable, so the group stays robust.</p>
         </div>
       </div>
       <div class="in-practice"><span class="ip-tag">from the paper</span><p class="ip-text">Srivastava et al. (2014)<a class="cite" href="#/references">[2]</a>: "the key idea is to <strong>randomly drop units (along with their connections) from the neural network during training</strong>," which keeps neurons from co-adapting and sharply cuts overfitting.</p></div>
@@ -116,11 +118,11 @@ keras.layers.<span class="fn">Dense</span>(<span class="n">8</span>,  activation
   <!-- 06 · WEIGHT DECAY -->
   <section data-background-color="#ffffff">
     <h2 class="slide-title">Weight decay keeps the weights small</h2>
-    <p class="sub">A small penalty on large weights is added to the loss. The network now has two objectives: fit the data and keep its weights modest. A large weight survives only if it genuinely earns its place.</p>
+    <p class="sub">We add a small penalty on large weights to the loss. The network now has two objectives: fit the data and keep its weights modest. A large weight survives only if it genuinely earns its place.</p>
     <div class="body center">
       <div class="bigformula" style="font-size:40px;"><span class="b">total loss</span>&nbsp;=&nbsp;<span style="color:var(--ink);">error on the data</span>&nbsp;+&nbsp;<span class="r">penalty for large weights</span></div>
-      <div style="font-size:36px; color:var(--ink); text-align:center; margin-top:30px;">\[ L + \lambda \sum_i w_i^2 \]</div>
-      <p class="note" style="margin-top:30px;">The penalty term sums the squared weights, scaled by a strength <span style="font-style:normal;">\( \lambda \)</span>. Smaller weights yield a smoother, simpler decision surface, the kind that survives contact with new mail. This is also known as <strong>L2 regularization</strong>.</p>
+      <div style="font-size:36px; color:var(--ink); text-align:center; margin-top:26px;">\[ L + \lambda \sum_i w_i^2, \]</div>
+      <p class="eqprose" style="text-align:center; max-width:1180px; margin-top:6px;">where \( L \) is the error on the data, \( \sum_i w_i^2 \) the sum of the squared weights, and \( \lambda \) the strength of the penalty; smaller weights give a smoother decision surface, the kind that survives contact with new mail. This is known as <strong>L2 regularization</strong>.</p>
       <div class="in-practice"><span class="ip-tag">from the paper</span><p class="ip-text">Krogh &amp; Hertz (1992)<a class="cite" href="#/references">[3]</a> showed that <strong>a simple weight decay can improve generalization</strong> by suppressing weights that only fit noise. Decades on, it is still standard practice.</p></div>
     </div>
   </section>
@@ -131,7 +133,7 @@ keras.layers.<span class="fn">Dense</span>(<span class="n">8</span>,  activation
     <p class="sub">The validation loss is monitored every epoch. The moment it stops improving and begins to climb, training halts and the best weights so far are kept.</p>
     <div class="body center">
       <div class="cols gap-lg" style="align-items:center;">
-        <p class="col col-text" style="font-size:32px;">This is the cheapest regularizer available: no extra layers, no penalty term, only a decision not to train past the point where the model begins to memorize. The validation curve marks exactly when that happens.</p>
+        <p class="col col-text" style="font-size:32px;">This is the cheapest regularizer available: no extra layers, no penalty term, only a decision not to train past the point where the model begins to memorize.</p>
         <div class="col" style="flex:0 0 600px;">
 <pre class="code">stop = keras.callbacks.<span class="fn">EarlyStopping</span>(
     monitor=<span class="s">"val_loss"</span>,
@@ -155,16 +157,16 @@ model.<span class="fn">fit</span>(..., callbacks=[stop])</pre>
   <!-- 08 · FEATURE SCALING -->
   <section data-background-color="#ffffff">
     <h2 class="slide-title">Placing features on the same scale</h2>
-    <p class="sub">Some features are small, such as 0 to 2 links. Others are large, such as 0 to 500 words. Left unscaled, the large numbers dominate the small ones and training slows.</p>
+    <p class="sub">Suppose one feature runs 0 to 2 links and another runs 0 to 500 words. Left unscaled, the large numbers dominate the small ones and training slows.</p>
     <div class="body center">
       <div class="cols gap-lg" style="align-items:center;">
-        <p class="col col-text" style="font-size:32px;">The analogue is comparing prices in different currencies. Converting them all to a <strong>common currency first</strong> makes the comparison fair.<br><br>After scaling, every feature carries equal weight, and the network learns more evenly and considerably faster.</p>
+        <p class="col col-text" style="font-size:32px;">The analogue is comparing prices in different currencies. Converting them all to a <strong>common currency first</strong> makes the comparison fair.<br><br>After scaling, every feature carries equal weight, and the network learns more evenly and faster.</p>
         <div class="col" style="flex:0 0 640px;">
 <pre class="code"><span class="k">from</span> sklearn.preprocessing <span class="k">import</span> StandardScaler
 
 X = <span class="fn">StandardScaler</span>().<span class="fn">fit_transform</span>(X)</pre>
-          <p class="note" style="margin-top:24px;">Standardization subtracts the mean and divides by the spread, so each feature is centered at zero with a comparable range.</p>
-          <div style="font-size:36px; color:var(--ink); text-align:center; margin-top:18px;">\[ \hat{x} = \dfrac{x - \mu}{\sigma} \]</div>
+          <p class="note" style="margin-top:24px;">Standardization subtracts the mean \( \mu \) and divides by the spread \( \sigma \), centering each feature at zero:</p>
+          <div style="font-size:36px; color:var(--ink); text-align:center; margin-top:14px;">\[ \hat{x} = \dfrac{x - \mu}{\sigma}. \]</div>
         </div>
       </div>
       <div class="in-practice"><span class="ip-tag">in practice</span><p class="ip-text">The scaler is fit on <strong>training data only</strong>, then applied to validation and test. Fitting on everything leaks information from the exam into the study set.</p></div>
@@ -229,7 +231,7 @@ X = <span class="fn">StandardScaler</span>().<span class="fn">fit_transform</spa
   <!-- 12 · WHY ACCURACY LIES -->
   <section data-background-color="#ffffff">
     <h2 class="slide-title">Why accuracy misleads</h2>
-    <p class="sub">Phishing might be 1 in 100 emails. A model that marks <em>every</em> email safe is then 99% accurate and catches nothing. This is the defining shape of security data.</p>
+    <p class="sub">Suppose phishing is 1 email in 100. A model that marks <em>every</em> email safe is then 99% accurate and catches nothing. This is the defining shape of security data.</p>
     <div class="body center">
       <div class="cols gap-lg" style="align-items:center;">
         <div class="col" style="flex:0 0 420px;">
@@ -238,9 +240,9 @@ X = <span class="fn">StandardScaler</span>().<span class="fn">fit_transform</spa
         </div>
         <div class="col" style="display:flex; flex-direction:column; gap:20px;">
           <div class="card tint-red"><div style="font:600 34px var(--sans); color:var(--red);">False negative</div><p style="font:400 27px/1.45 var(--sans); color:var(--body); margin:10px 0 0;">phishing reaches the inbox, and the user clicks the link</p></div>
-          <div class="card tint-blue"><div style="font:600 34px var(--sans); color:var(--accent);">False positive</div><p style="font:400 27px/1.45 var(--sans); color:var(--body); margin:10px 0 0;">real mail is quarantined, a missed invoice or offer</p></div>
-          <p class="lead" style="font-size:30px; margin:6px 0 0;">The relevant measures are <strong>recall</strong> (of all phishing, the fraction caught) and <strong>precision</strong> (of what was flagged, the fraction genuine), never raw accuracy.</p>
-          <div style="font-size:28px; color:var(--ink); text-align:center; margin-top:8px;">\[ \text{recall} = \dfrac{\text{caught}}{\text{all phishing}} \qquad \text{precision} = \dfrac{\text{genuine}}{\text{all flagged}} \]</div>
+          <div class="card tint-blue"><div style="font:600 34px var(--sans); color:var(--accent);">False positive</div><p style="font:400 27px/1.45 var(--sans); color:var(--body); margin:10px 0 0;">legitimate mail is quarantined and a real invoice is lost</p></div>
+          <p class="lead" style="font-size:30px; margin:6px 0 0;">The relevant measures are <strong>recall</strong> and <strong>precision</strong>, never raw accuracy.</p>
+          <div style="font-size:28px; color:var(--ink); text-align:center; margin-top:10px;">\[ \text{recall} = \dfrac{\text{caught}}{\text{all phishing}}, \qquad \text{precision} = \dfrac{\text{genuine}}{\text{all flagged}}. \]</div>
         </div>
       </div>
     </div>
@@ -249,7 +251,7 @@ X = <span class="fn">StandardScaler</span>().<span class="fn">fit_transform</spa
   <!-- 13 · FIXING IMBALANCE -->
   <section data-background-color="#ffffff">
     <h2 class="slide-title">Directing a model toward the rare class</h2>
-    <p class="sub">Three training time levers shift the network's attention toward the rare phishing examples.</p>
+    <p class="sub">Three training-time levers shift the network's attention toward the rare phishing examples that raw accuracy lets it ignore.</p>
     <div class="body center">
       <div class="cards">
         <div class="card"><div class="card-title" style="margin:0;">Class weights</div><div class="card-note">make each phishing error count for more in the loss. One line: <span class="code-inline">class_weight={0:1, 1:20}</span>.</div></div>
@@ -272,7 +274,7 @@ X = <span class="fn">StandardScaler</span>().<span class="fn">fit_transform</spa
     <h2 class="slide-title">Think it through</h2>
     <div class="body center">
       <p class="q-topic">Set the cutoff</p>
-      <p class="col-text" style="font-size:34px; max-width:1520px;">A trained filter scores each email from 0 to 1, and a cutoff turns that score into a decision. Two deployments of the same model: a bank's fraud desk, and a sales team's inbox where a quarantined customer email is lost revenue. For each, which error hurts more, and which way should the cutoff move?</p>
+      <p class="col-text" style="font-size:34px; max-width:1520px;">A trained filter scores each email from 0 to 1, and a cutoff turns that score into a decision. Suppose the same model runs in two places: a bank's fraud desk, and a sales team's inbox where a quarantined customer email means lost revenue. For each, which error hurts more, and which way should the cutoff move?</p>
       <div style="display:flex; flex-wrap:wrap; gap:18px; margin-top:38px;">
         <span class="chip" style="border-radius:999px;">what does a missed attack cost?</span>
         <span class="chip" style="border-radius:999px;">what does a false alarm cost?</span>
@@ -330,7 +332,7 @@ X = <span class="fn">StandardScaler</span>().<span class="fn">fit_transform</spa
 
   <!-- 18 · REFERENCES -->
   <section id="references" data-background-color="#ffffff">
-    <h2 class="slide-title">References and where to go deeper</h2>
+    <h2 class="slide-title">References</h2>
     <div class="body center">
       <div class="refs">
         <div class="ref-col">

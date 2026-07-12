@@ -156,7 +156,7 @@
   <!-- 07 · THE OBVIOUS IDEA, AND WHY IT STALLS -->
   <section data-background-color="#ffffff">
     <h2 class="slide-title">The obvious idea and why it stalls</h2>
-    <p class="sub">The natural first approach gives each word its own slot in a large dictionary: a reasonable, inexpensive baseline that discards the one property that must be preserved.</p>
+    <p class="sub">The natural first approach gives each word its own slot in a large dictionary: a cheap baseline that discards the one thing it must keep.</p>
     <div class="body center">
       <div style="display:flex; align-items:center; gap:34px; margin-bottom:46px; flex-wrap:wrap;">
         <div class="card" style="padding:24px 32px;"><div class="card-eyebrow" style="color:var(--muted);">one word, "verify"</div><div style="font:600 38px var(--mono); color:var(--ink); margin-top:12px;">[ 0, 0, 1, 0, 0, … ]</div><div style="font:500 24px var(--mono); color:var(--muted2); margin-top:10px;">one-hot, a single slot lit</div></div>
@@ -437,7 +437,7 @@ model = keras.<span class="fn">Sequential</span>([
   <!-- 19 · CODE: PRETRAINED -->
   <section data-background-color="#ffffff">
     <h2 class="slide-title">Or reuse a map already built</h2>
-    <p class="sub">The Embedding layer is given GloVe's numbers as its starting point instead of random ones.</p>
+    <p class="sub">The Embedding layer is given GloVe's pretrained numbers as its starting point instead of random ones.</p>
     <div class="body center">
       <div class="code-row">
 <pre class="code" style="flex:1.4;"><span class="c"># GloVe: 400k words, each already a vector</span>
@@ -466,7 +466,7 @@ layers.<span class="fn">Embedding</span>(<span class="n">20000</span>, <span cla
   <!-- 20 · SECURITY PAYOFF -->
   <section data-background-color="#ffffff">
     <h2 class="slide-title">Why this catches reworded phishing</h2>
-    <p class="sub">Attackers reword their messages to slip past filters. This is exactly where embeddings help.</p>
+    <p class="sub">Attackers reword their messages to slip past keyword filters. This is exactly where embeddings help.</p>
     <div class="body center">
       <div class="cards" style="margin-bottom:34px;">
         <div class="card"><div class="card-eyebrow" style="color:var(--muted);">trained on</div><div style="font:500 32px var(--sans); color:var(--ink); margin-top:14px;">"verify your account"</div></div>
@@ -621,7 +621,7 @@ layers.<span class="fn">Embedding</span>(<span class="n">20000</span>, <span cla
 
   <!-- 28 · REFERENCES -->
   <section id="references" data-background-color="#ffffff">
-    <h2 class="slide-title">References and where to go deeper</h2>
+    <h2 class="slide-title">References</h2>
     <div class="body center">
       <div class="refs">
         <div class="ref-col">
