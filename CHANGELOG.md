@@ -1,5 +1,22 @@
 # Changelog
 
+## 0.6.2 - 2026-07-14
+
+### Changed
+
+- Present the equations across the first five decks in running textbook prose, with bold vectors and plain-language symbol keys
+- Normalize subtitle wrapping across the decks so no subtitle line ends on a single word
+- Shorten the references slide title to "References" across the decks
+- Trim redundant on-slide notes in the neural networks deck
+
+### Removed
+
+- Remove the recap slide from every deck
+
+### Fixed
+
+- Order the training deep networks deck's references by first citation
+
 ## 0.6.1 - 2026-07-08
 
 ### Added
