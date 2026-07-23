@@ -1,6 +1,10 @@
 # Internal notes
 notes/
 
+# Internal tooling (cross-repo framework sync); keeps local paths and the
+# sibling relationship out of published history.
+scripts/
+
 # OS and editor cruft
 .DS_Store
 Thumbs.db
