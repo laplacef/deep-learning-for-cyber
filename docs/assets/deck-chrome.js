@@ -5,26 +5,24 @@
      - top-right   : a link to the GitHub repository
      - bottom-left : the current project version
 
-   Repo-specific data (DECKS, VERSION, REPO_URL) lives here so there is a
-   single place to edit. Drop it into a deck with:
+   Shared framework, byte-identical wherever it is used. All site-specific
+   data (version, label, repoUrl, decks) is read from window.SITE, defined in
+   the per-site version.js — edit that, not this file. The fallbacks below keep
+   the chrome working if version.js is absent. Drop it into a deck with:
+     <script src="../assets/version.js"></script>
      <script src="../assets/deck-chrome.js"></script>
    No dependency on reveal; safe to load before or after it. */
 (function () {
   'use strict';
 
-  var VERSION  = window.DLFC_VERSION || 'v0.1.0';
-  var REPO_URL = 'https://github.com/laplacef/deep-learning-for-cyber';
+  var SITE     = window.SITE || {};
+  var VERSION  = SITE.version || 'v0.1.0';
+  var REPO_URL = SITE.repoUrl || '#';
+  var LABEL    = SITE.label   || 'Lecture Decks';
 
-  // Teaching order; matches docs/index.html. built:false renders as a
-  // dimmed, non-linked "soon" row.
-  var DECKS = [
-    { n: '01', slug: 'neural-networks',                title: 'Neural Networks',                    built: true  },
-    { n: '02', slug: 'how-neural-networks-learn',      title: 'How Neural Networks Learn',          built: true  },
-    { n: '03', slug: 'training-deep-networks',         title: 'Training Deep Networks',             built: true  },
-    { n: '04', slug: 'text-embeddings',                title: 'Text Embeddings',                    built: true  },
-    { n: '05', slug: 'malware-as-images',              title: 'Malware as Images',                  built: true  },
-    { n: '06', slug: 'sequences-recurrence',           title: 'Sequences & Recurrence',             built: true  }
-  ];
+  // Teaching order; matches the per-site version.js and docs/index.html.
+  // built:false renders as a dimmed, non-linked "soon" row.
+  var DECKS = SITE.decks || [];
 
   // Current deck slug from the URL (…/docs/<slug>/…).
   var parts = location.pathname.replace(/\/+$/, '').split('/');
@@ -104,7 +102,7 @@
       '</button>' +
       '<div class="dc-scrim" id="dc-scrim"></div>' +
       '<nav class="dc-menu" id="dc-menu" aria-label="Decks" hidden>' +
-        '<div class="dc-menu-top"><span class="dc-eyebrow">Deep Learning for Cyber<span class="dc-ver">(' + VERSION + ')</span></span>' +
+        '<div class="dc-menu-top"><span class="dc-eyebrow">' + LABEL + '<span class="dc-ver">(' + VERSION + ')</span></span>' +
           '<button class="dc-close" id="dc-close" aria-label="Close menu">&times;</button></div>' +
         '<div class="dc-home-row">' +
           '<a class="dc-home" href="../">Index</a>' +
